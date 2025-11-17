@@ -4,7 +4,8 @@ from typing import List, Optional
 from datetime import datetime
 from uuid import uuid4
 
-router = APIRouter(prefix="/community", tags=["community"])
+# Prefix means all routes start with /community
+router = APIRouter(prefix="/community")
 
 
 # ---------- MODELS ----------
@@ -53,7 +54,7 @@ COMMUNITY_FEED: List[FeedItem] = []
 def share_to_community(payload: ShareRequest):
     """
     Create a new community post from the current track.
-    We DO NOT store Spotify tokens here. Only metadata.
+    We DO NOT store Spotify tokens here. Only display name + track metadata.
     """
     if not payload.track_name or not payload.artist_name:
         raise HTTPException(
