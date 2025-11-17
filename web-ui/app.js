@@ -1,146 +1,220 @@
-// -------- CONFIG --------
-const BASE = "http://127.0.0.1:8000";
-const baseShow = document.getElementById("baseShow");
-if (baseShow) baseShow.textContent = BASE;
+// --------- GLOBAL STATE ----------
 
-// -------- El refs --------
-const signedAs   = document.getElementById("signedAs");
-const tokenEl    = document.getElementById("token");
-const btnLogin   = document.getElementById("btnLogin");
-const btnLogout  = document.getElementById("btnLogout");
+// Track the current song for community sharing
+let currentTrack = null;
 
-const btnMe      = document.getElementById("btnMe");
-const meOut      = document.getElementById("meOut");
+// Track passport countries for achievements
+// In real app: this comes from your backend /passport endpoint.
+let passportCountries = [];
 
-const limitEl    = document.getElementById("limit");
-const btnPlay    = document.getElementById("btnPlaylists");
-const listEl     = document.getElementById("playlists");
 
-const btnPassTop = document.getElementById("btnPassportTop");
-const btnPassRec = document.getElementById("btnPassportRecent");
-const passOut    = document.getElementById("passOut");
+// ---------- TEST HELPERS ----------
 
-// -------- Token helpers --------
-function readHashParams() {
-  const h = (window.location.hash || "").replace(/^#/, "");
-  const out = {};
-  if (!h) return out;
-  h.split("&").forEach(kv => {
-    const [k, v] = kv.split("=");
-    if (k) out[decodeURIComponent(k)] = decodeURIComponent(v || "");
-  });
-  return out;
+// For quickly testing community sharing without Spotify wired in yet
+function setTestTrack() {
+    currentTrack = {
+        trackName: "Test Song",
+        artistName: "Test Artist",
+        albumName: "Test Album",
+        albumImageUrl: "https://via.placeholder.com/64"
+    };
+
+    const label = document.getElementById("currentTrackLabel");
+    label.textContent = `Current track: ${currentTrack.trackName} by ${currentTrack.artistName}`;
 }
 
-function loadTokens() {
-  const hash = readHashParams();
-  if (hash.access_token) {
-    localStorage.setItem("spotify_access_token", hash.access_token);
-    localStorage.setItem("spotify_refresh_token", hash.refresh_token || "");
-    localStorage.setItem("app_token", hash.app_token || "");
-    localStorage.setItem("display_name", hash.display_name || "");
-    localStorage.setItem("spotify_id", hash.spotify_id || "");
-    history.replaceState({}, document.title, window.location.pathname);
-  }
-  const at = localStorage.getItem("spotify_access_token") || "";
-  tokenEl.value = at;
-  const name = localStorage.getItem("display_name") || "";
-  if (signedAs) {
-    signedAs.textContent = at ? `Signed in as ${name || "Spotify user"}` : "Not signed in";
-    signedAs.className = "pill " + (at ? "ok" : "err");
-  }
-}
-
-function requireToken() {
-  const at = tokenEl.value.trim();
-  if (!at) throw new Error("No access token. Click 'Login with Spotify' first.");
-  return at;
-}
-
-// -------- Actions --------
-btnLogin.onclick = () => {
-  window.location.href = `${BASE}/auth/login`;
-};
-
-btnLogout.onclick = () => {
-  localStorage.removeItem("spotify_access_token");
-  localStorage.removeItem("spotify_refresh_token");
-  localStorage.removeItem("app_token");
-  localStorage.removeItem("display_name");
-  localStorage.removeItem("spotify_id");
-  tokenEl.value = "";
-  if (signedAs) { signedAs.textContent = "Not signed in"; signedAs.className = "pill err"; }
-  if (meOut) meOut.textContent = "";
-  if (listEl) listEl.innerHTML = "";
-  if (passOut) passOut.textContent = "";
-};
-
-btnMe.onclick = async () => {
-  meOut.textContent = "Loading profile…";
-  try {
-    const at = requireToken();
-    const url = `${BASE}/spotify/me?access_token=${encodeURIComponent(at)}`;
-    const r = await fetch(url);
-    if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`);
-    const data = await r.json();
-    const lines = [
-      `ID: ${data.id}`,
-      `Email: ${data.email || "(unknown)"}`,
-      `Name: ${data.display_name || "(unknown)"}`,
-      `Country: ${data.country || "(unknown)"}`,
-      `Product: ${data.product || "(unknown)"}`
+// For quickly testing achievements without passport wired in yet
+function setTestPassportCountries() {
+    // Pretend the user has visited 7 countries
+    passportCountries = [
+        { code: "US", name: "United States" },
+        { code: "GB", name: "United Kingdom" },
+        { code: "JP", name: "Japan" },
+        { code: "FR", name: "France" },
+        { code: "BR", name: "Brazil" },
+        { code: "DE", name: "Germany" },
+        { code: "MX", name: "Mexico" }
     ];
-    meOut.textContent = lines.join("\n");
-  } catch (e) {
-    meOut.textContent = `Error: ${e.message || e}`;
-  }
-};
 
-btnPlay.onclick = async () => {
-  listEl.innerHTML = "<li>Loading…</li>";
-  try {
-    const at = requireToken();
-    const limit = Number(limitEl.value) || 5;
-    const url = `${BASE}/spotify/playlists?access_token=${encodeURIComponent(at)}&limit=${limit}`;
-    console.log("GET", url);
-    const r = await fetch(url);
-    if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`);
-    const data = await r.json();
-    const items = (data.items || []).map(p =>
-      `<li><strong>${p.name}</strong> <small>(${p.tracks?.total ?? "?"} tracks)</small></li>`
-    ).join("");
-    listEl.innerHTML = items || "<li>No playlists</li>";
-  } catch (e) {
-    listEl.innerHTML = `<li class="err">Error: ${e.message || e}</li>`;
-  }
-};
-
-async function buildPassport(path) {
-  passOut.textContent = "Generating passport…";
-  try {
-    const at = requireToken();
-    const url = `${BASE}${path}?access_token=${encodeURIComponent(at)}`;
-    console.log("GET", url);
-    const r = await fetch(url);
-    if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`);
-    const data = await r.json();
-
-    const cc = data.country_counts || {};
-    const rp = data.region_percentages || {};
-    const total = data.total_artists ?? 0;
-
-    let out = `Total Artists: ${total}\n\nCountries:\n`;
-    Object.keys(cc).sort().forEach(k => out += `• ${k}: ${cc[k]}\n`);
-    out += `\nRegions:\n`;
-    Object.keys(rp).forEach(k => out += `• ${k}: ${Math.round((rp[k] || 0) * 100)}%\n`);
-    passOut.textContent = out;
-  } catch (e) {
-    passOut.textContent = `Error: ${e.message || e}`;
-  }
+    const label = document.getElementById("passportSummaryLabel");
+    label.textContent = `Test passport: ${passportCountries.length} countries loaded.`;
 }
 
-btnPassTop.onclick = () => buildPassport(`/passport/from_token`);
-btnPassRec.onclick = () => buildPassport(`/passport/from_token_recent`);
 
-// Init
-loadTokens();
+// ---------- COMMUNITY SHARE ----------
+
+async function shareToCommunity() {
+    if (!currentTrack) {
+        alert("No current track set. Use 'Set Test Track' or wire in your Spotify track first.");
+        return;
+    }
+
+    const displayNameInput = document.getElementById("displayNameInput");
+    const messageInput = document.getElementById("communityMessageInput");
+
+    const displayName = displayNameInput.value.trim() || "Anonymous";
+    const message = messageInput.value.trim();
+
+    const payload = {
+        display_name: displayName,
+        track_name: currentTrack.trackName,
+        artist_name: currentTrack.artistName,
+        album_name: currentTrack.albumName,
+        album_image_url: currentTrack.albumImageUrl,
+        message: message
+    };
+
+    try {
+        const res = await fetch("http://127.0.0.1:8000/community/share", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+            const text = await res.text();
+            console.error("Share failed:", text);
+            alert("Failed to share to community.");
+            return;
+        }
+
+        // Clear message box
+        messageInput.value = "";
+
+        // Reload feed so we see our new post
+        await loadCommunityFeed();
+    } catch (err) {
+        console.error("Error sharing to community:", err);
+        alert("Network error while sharing to community.");
+    }
+}
+
+
+// ---------- COMMUNITY FEED ----------
+
+async function loadCommunityFeed() {
+    try {
+        const res = await fetch("http://127.0.0.1:8000/community/feed");
+        if (!res.ok) {
+            const text = await res.text();
+            console.error("Failed to load feed:", text);
+            alert("Could not load community feed.");
+            return;
+        }
+
+        const posts = await res.json();
+        renderCommunityFeed(posts);
+    } catch (err) {
+        console.error("Error loading community feed:", err);
+        alert("Network error while loading community feed.");
+    }
+}
+
+function renderCommunityFeed(posts) {
+    const container = document.getElementById("communityFeed");
+    container.innerHTML = "";
+
+    if (!posts.length) {
+        container.innerHTML = "<p>No community posts yet. Be the first to share!</p>";
+        return;
+    }
+
+    posts.forEach(post => {
+        const card = document.createElement("div");
+        card.className = "community-post";
+
+        const createdAt = new Date(post.created_at);
+
+        card.innerHTML = `
+            <div class="community-post-header">
+                <strong>${post.display_name}</strong>
+                <span class="community-post-date">${createdAt.toLocaleString()}</span>
+            </div>
+            <div class="community-post-body">
+                <div class="track-info">
+                    ${post.album_image_url
+                        ? `<img src="${post.album_image_url}" alt="Album cover" class="album-art" />`
+                        : ""
+                    }
+                    <div>
+                        <div class="track-name">${post.track_name}</div>
+                        <div class="artist-name">${post.artist_name}</div>
+                        ${post.album_name ? `<div class="album-name">${post.album_name}</div>` : ""}
+                    </div>
+                </div>
+                ${post.message ? `<p class="community-message">${post.message}</p>` : ""}
+            </div>
+        `;
+
+        container.appendChild(card);
+    });
+}
+
+
+// ---------- ACHIEVEMENTS / STAMPS ----------
+
+// In the real app, you’d call your passport endpoint first to fill passportCountries,
+// then call loadAchievements(). For now, setTestPassportCountries() gives fake data.
+
+async function loadAchievements() {
+    const displayName = document.getElementById("displayNameInput").value.trim() || "Anonymous";
+
+    // Count distinct countries from passportCountries
+    const unique = new Set(
+        passportCountries.map(c => c.code || c.country_code || c.name)
+    );
+    const countryCount = unique.size;
+
+    try {
+        const res = await fetch("http://127.0.0.1:8000/community/achievements", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                display_name: displayName,
+                country_count: countryCount
+            })
+        });
+
+        if (!res.ok) {
+            const text = await res.text();
+            console.error("Failed to load achievements:", text);
+            alert("Could not load achievements.");
+            return;
+        }
+
+        const achievements = await res.json();
+        renderAchievements(achievements);
+    } catch (err) {
+        console.error("Error loading achievements:", err);
+        alert("Network error while loading achievements.");
+    }
+}
+
+function renderAchievements(achievements) {
+    const container = document.getElementById("achievementsList");
+    container.innerHTML = "";
+
+    if (!achievements.length) {
+        container.innerHTML = "<p>No achievements defined.</p>";
+        return;
+    }
+
+    achievements.forEach(ach => {
+        const div = document.createElement("div");
+        div.className = "achievement-card " + (ach.unlocked ? "unlocked" : "locked");
+
+        div.innerHTML = `
+            <div class="achievement-title">${ach.name}</div>
+            <div class="achievement-desc">${ach.description}</div>
+            <div class="achievement-status">
+                ${ach.unlocked ? "✅ Unlocked" : "🔒 Locked"}
+            </div>
+        `;
+
+        container.appendChild(div);
+    });
+}
