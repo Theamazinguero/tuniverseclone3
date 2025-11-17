@@ -1,49 +1,53 @@
 let currentTrack = null;
-let passportCountries = [];
 
-// ---------------- TEST HELPERS ----------------
+// ---------------- LOAD CURRENT TRACK ----------------
 
-function setTestTrack() {
-    currentTrack = {
-        trackName: "Test Song",
-        artistName: "Test Artist",
-        albumName: "Test Album",
-        albumImageUrl: "https://via.placeholder.com/64"
-    };
+async function loadCurrentTrack() {
+    const token = document.getElementById("accessTokenInput").value.trim();
 
-    document.getElementById("currentTrackLabel").textContent =
-        `Track: ${currentTrack.trackName} by ${currentTrack.artistName}`;
-}
-
-function setTestPassportCountries() {
-    passportCountries = [
-        { code: "US" }, { code: "GB" }, { code: "JP" },
-        { code: "FR" }, { code: "BR" }, { code: "DE" }, { code: "MX" }
-    ];
-
-    document.getElementById("passportSummaryLabel").textContent =
-        `${passportCountries.length} countries loaded.`;
-}
-
-
-// ---------------- COMMUNITY SHARE ----------------
-
-async function shareToCommunity() {
-    const name = document.getElementById("displayNameInput").value.trim() || "Anonymous";
-
-    if (!currentTrack) {
-        alert("No track set.");
+    if (!token) {
+        alert("Paste your Spotify token first.");
         return;
     }
 
+    const res = await fetch("http://127.0.0.1:8000/spotify/currently_playing", {
+        headers: {
+            "Authorization": `Bearer ${token}`
+        }
+    });
+
+    const data = await res.json();
+
+    if (!data.playing) {
+        document.getElementById("currentTrackLabel").textContent =
+            "Nothing is currently playing.";
+        return;
+    }
+
+    currentTrack = data;
+
+    document.getElementById("currentTrackLabel").textContent =
+        `${data.track_name} — ${data.artist_name}`;
+}
+
+
+// ---------------- SHARE TO COMMUNITY ----------------
+
+async function shareToCommunity() {
+    if (!currentTrack) {
+        alert("Load current track first.");
+        return;
+    }
+
+    const displayName = document.getElementById("displayNameInput").value.trim() || "Anonymous";
     const message = document.getElementById("communityMessageInput").value.trim();
 
     const payload = {
-        display_name: name,
-        track_name: currentTrack.trackName,
-        artist_name: currentTrack.artistName,
-        album_name: currentTrack.albumName,
-        album_image_url: currentTrack.albumImageUrl,
+        display_name: displayName,
+        track_name: currentTrack.track_name,
+        artist_name: currentTrack.artist_name,
+        album_name: currentTrack.album_name,
+        album_image_url: currentTrack.album_image_url,
         message: message
     };
 
@@ -57,7 +61,7 @@ async function shareToCommunity() {
 }
 
 
-// ---------------- FEED ----------------
+// ---------------- COMMUNITY FEED ----------------
 
 async function loadCommunityFeed() {
     const res = await fetch("http://127.0.0.1:8000/community/feed");
@@ -81,17 +85,16 @@ async function loadCommunityFeed() {
 // ---------------- ACHIEVEMENTS ----------------
 
 async function loadAchievements() {
-    const name = document.getElementById("displayNameInput").value.trim() || "Anonymous";
-
-    const payload = {
-        display_name: name,
-        country_count: passportCountries.length
-    };
+    const displayName = document.getElementById("displayNameInput").value.trim() || "Anonymous";
+    const countryCount = parseInt(document.getElementById("countryCountInput").value) || 0;
 
     const res = await fetch("http://127.0.0.1:8000/community/achievements", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+            display_name: displayName,
+            country_count: countryCount
+        })
     });
 
     const achievements = await res.json();
