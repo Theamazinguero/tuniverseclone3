@@ -2,58 +2,83 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Tuniverse - Community & Stamps</title>
+  <title>Tuniverse</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header>
     <h1>Tuniverse</h1>
-    <p>Community sharing + passport stamps (prototype)</p>
+    <p>Spotify world map, community sharing, and passport stamps</p>
   </header>
 
-  <!-- Basic user setup -->
-  <section id="userSection">
-    <h2>User Setup</h2>
+  <!-- 1) AUTH / SPOTIFY LOGIN -->
+  <section id="authSection">
+    <h2>1) Connect Spotify</h2>
+
+    <p>
+      Click login to go through Spotify auth. When redirected back with a token,
+      paste it below if it’s not auto-filled by your flow.
+    </p>
+
+    <div class="button-row">
+      <a class="button-like" href="http://127.0.0.1:8000/auth/login" target="_blank">
+        Login with Spotify
+      </a>
+    </div>
+
+    <div class="field-group">
+      <label for="accessTokenInput">Access Token</label>
+      <input
+        id="accessTokenInput"
+        type="text"
+        placeholder="Paste access token here if needed"
+      />
+    </div>
+
+    <div class="button-row">
+      <button type="button" onclick="fetchSpotifyMe()">
+        Load Profile & Current Track
+      </button>
+    </div>
+
+    <div id="profileInfo"></div>
+    <div id="currentTrackInfo"></div>
+  </section>
+
+  <!-- 2) PASSPORT -->
+  <section id="passportSection">
+    <h2>2) Music Passport</h2>
+
+    <p>Load your passport based on your listening history.</p>
+
+    <div class="button-row">
+      <button type="button" onclick="loadPassport()">
+        Load Passport from Token
+      </button>
+    </div>
+
+    <div id="passportSummary"></div>
+    <ul id="passportCountryList"></ul>
+  </section>
+
+  <!-- 3) COMMUNITY -->
+  <section id="communitySection">
+    <h2>3) Community</h2>
 
     <div class="field-group">
       <label for="displayNameInput">Display Name</label>
       <input
         id="displayNameInput"
         type="text"
-        placeholder="Name shown in community feed and achievements"
+        placeholder="Name shown in community feed"
       />
     </div>
 
-    <!-- Optional: for your real Spotify calls -->
-    <div class="field-group">
-      <label for="accessTokenInput">Spotify Access Token (optional for now)</label>
-      <input
-        id="accessTokenInput"
-        type="text"
-        placeholder="Paste your Spotify token if you use it elsewhere"
-      />
-    </div>
-
-    <!-- Testing helpers so you can verify everything without Spotify wired in -->
-    <div class="button-row">
-      <button type="button" onclick="setTestTrack()">
-        Set Test Track
-      </button>
-      <button type="button" onclick="setTestPassportCountries()">
-        Set Test Passport Countries
-      </button>
-    </div>
-
-    <p id="currentTrackLabel"></p>
-    <p id="passportSummaryLabel"></p>
-  </section>
-
-  <!-- Community share section -->
-  <section id="communitySection">
-    <h2>Community</h2>
-
-    <p>Share the track you’re currently listening to with a short message.</p>
+    <p>
+      Share the track you’re currently listening to with a short message.
+      The current track is taken from the last successful "Load Profile & Current Track".
+    </p>
 
     <div class="field-group">
       <label for="communityMessageInput">Message (optional)</label>
@@ -76,16 +101,15 @@
     <div id="communityFeed"></div>
   </section>
 
-  <!-- Achievements / stamps section -->
+  <!-- 4) ACHIEVEMENTS / STAMPS -->
   <section id="achievementsSection">
-    <h2>Passport Stamps</h2>
+    <h2>4) Passport Stamps</h2>
 
     <p>
       These unlock based on your passport countries and how much you post in the community.
     </p>
 
     <div class="button-row">
-      <!-- For now uses test passport data or whatever passportCountries you set in JS -->
       <button type="button" onclick="loadAchievements()">
         Refresh Achievements
       </button>
@@ -97,5 +121,3 @@
   <script src="app.js"></script>
 </body>
 </html>
-
-
