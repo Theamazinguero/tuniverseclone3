@@ -9,6 +9,7 @@ Change Log:
 Version 1.0 (10/03/2025):
 Created main to run backend code
 """
+
 # backend/main.py
 from pathlib import Path
 from fastapi import FastAPI
@@ -23,7 +24,7 @@ except Exception:
 
 from backend.routers import users, playlists, artists, passport, compare
 from backend.routers import demo_passport
-from backend.routers import community  # <-- added
+from backend.routers import community
 from backend import spotify_auth
 
 app = FastAPI(title="Tuniverse Backend", version="0.1.0")
@@ -51,10 +52,9 @@ app.include_router(compare.router, prefix="/compare", tags=["Comparisons"])
 app.include_router(demo_passport.router, tags=["Demo"])
 app.include_router(spotify_auth.router, tags=["Auth"])
 
-# NEW: community router (prefix is defined inside community.py)
+# Community sharing + achievements
 app.include_router(community.router, tags=["Community"])
 
 @app.get("/")
 def root():
     return {"message": "Tuniverse backend running"}
-
