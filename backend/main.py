@@ -15,8 +15,8 @@ Created main to run backend code
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from routers import community
-from routers import spotify   # <-- REQUIRED NOW
+from backend.routers import community
+from backend.routers import spotify   # <-- REQUIRED NOW
 
 app = FastAPI()
 
