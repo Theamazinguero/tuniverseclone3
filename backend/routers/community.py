@@ -4,8 +4,7 @@ from typing import List, Optional
 from datetime import datetime
 from uuid import uuid4
 
-# All routes start with /community
-router = APIRouter(prefix="/community", tags=["Community"])
+router = APIRouter(prefix="/community", tags=["community"])
 
 
 # ---------- MODELS ----------
@@ -32,7 +31,7 @@ class FeedItem(BaseModel):
 
 class AchievementsRequest(BaseModel):
     display_name: str
-    country_count: int  # distinct countries in the user's passport
+    country_count: int
 
 
 class Achievement(BaseModel):
@@ -44,7 +43,6 @@ class Achievement(BaseModel):
 
 # ---------- IN-MEMORY STORE ----------
 
-# Resets whenever the server restarts
 COMMUNITY_FEED: List[FeedItem] = []
 
 
@@ -52,15 +50,8 @@ COMMUNITY_FEED: List[FeedItem] = []
 
 @router.post("/share", response_model=FeedItem)
 def share_to_community(payload: ShareRequest):
-    """
-    Create a new community post from the current track.
-    We do NOT store Spotify tokens here. Only display name + track metadata.
-    """
     if not payload.track_name or not payload.artist_name:
-        raise HTTPException(
-            status_code=400,
-            detail="track_name and artist_name are required",
-        )
+        raise HTTPException(status_code=400, detail="Missing track or artist")
 
     post = FeedItem(
         id=str(uuid4()),
@@ -73,81 +64,39 @@ def share_to_community(payload: ShareRequest):
         created_at=datetime.utcnow(),
     )
 
-    # newest first
     COMMUNITY_FEED.insert(0, post)
     return post
 
 
 @router.get("/feed", response_model=List[FeedItem])
 def get_community_feed(limit: int = 50):
-    """
-    Return recent community posts, newest first.
-    """
     return COMMUNITY_FEED[:limit]
 
 
-# ---------- ACHIEVEMENTS / STAMPS ROUTE ----------
+# ---------- ACHIEVEMENTS ----------
 
 @router.post("/achievements", response_model=List[Achievement])
 def get_achievements(payload: AchievementsRequest):
-    """
-    Compute achievements based on:
-    - number of countries in user's passport (sent from frontend)
-    - number of community posts by this display_name
-    """
     display_name = payload.display_name.strip()
-    country_count = max(0, payload.country_count)
+    country_count = payload.country_count
 
-    # count posts by this user
+    # Count user posts
     post_count = sum(1 for p in COMMUNITY_FEED if p.display_name == display_name)
 
     achievements: List[Achievement] = []
 
-    def add_achievement(id_: str, name: str, description: str, condition: bool):
+    def ach(id, name, desc, unlocked):
         achievements.append(
-            Achievement(
-                id=id_,
-                name=name,
-                description=description,
-                unlocked=condition,
-            )
+            Achievement(id=id, name=name, description=desc, unlocked=unlocked)
         )
 
-    # Country-based stamps
-    add_achievement(
-        "first_country",
-        "First Country Stamp",
-        "Visit your first country in your music passport.",
-        country_count >= 1,
-    )
+    # Country achievements
+    ach("first_country", "First Country", "Visit your first country.", country_count >= 1)
+    ach("traveler_5", "World Traveler I", "Visit 5 countries.", country_count >= 5)
+    ach("traveler_10", "World Traveler II", "Visit 10 countries.", country_count >= 10)
 
-    add_achievement(
-        "world_traveler_1",
-        "World Traveler I",
-        "Visit 5 different countries in your music passport.",
-        country_count >= 5,
-    )
-
-    add_achievement(
-        "world_traveler_2",
-        "World Traveler II",
-        "Visit 10+ different countries in your music passport.",
-        country_count >= 10,
-    )
-
-    # Community-based stamps
-    add_achievement(
-        "community_starter",
-        "Community Starter",
-        "Share your first post to the community.",
-        post_count >= 1,
-    )
-
-    add_achievement(
-        "social_listener",
-        "Social Listener",
-        "Share 5+ posts to the community.",
-        post_count >= 5,
-    )
+    # Community achievements
+    ach("first_post", "Community Starter", "Make your first post.", post_count >= 1)
+    ach("five_posts", "Social Listener", "Make 5 posts.", post_count >= 5)
 
     return achievements
