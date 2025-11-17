@@ -9,65 +9,52 @@ Change Log:
 Version 1.0 (10/03/2025):
 Created main to run backend code
 """
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, HttpUrl
-from typing import List, Optional
-from datetime import datetime
-from uuid import uuid4
+# backend/main.py
+from pathlib import Path
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
-# Prefix means all routes start with /community
-router = APIRouter(prefix="/community")
+# Load env from backend/.env
+try:
+    from dotenv import load_dotenv
+    load_dotenv(dotenv_path=Path(__file__).parent / ".env")
+except Exception:
+    pass
 
+from backend.routers import users, playlists, artists, passport, compare
+from backend.routers import demo_passport
+from backend.routers import community  # <-- added
+from backend import spotify_auth
 
-# ---------- MODELS ----------
+app = FastAPI(title="Tuniverse Backend", version="0.1.0")
 
-class ShareRequest(BaseModel):
-    display_name: str
-    track_name: str
-    artist_name: str
-    album_name: Optional[str] = None
-    album_image_url: Optional[HttpUrl] = None
-    message: Optional[str] = None
+# CORS: explicitly allow your web server origins
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://127.0.0.1:5500",
+        "http://localhost:5500",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
+app.include_router(users.router, prefix="/users", tags=["Users"])
+app.include_router(playlists.router, prefix="/playlists", tags=["Playlists"])
+app.include_router(artists.router, prefix="/artists", tags=["Artists"])
 
-class FeedItem(BaseModel):
-    id: str
-    display_name: str
-    track_name: str
-    artist_name: str
-    album_name: Optional[str]
-    album_image_url: Optional[HttpUrl]
-    message: Optional[str]
-    created_at: datetime
+# router already has prefix="/passport", so we include it without another prefix
+app.include_router(passport.router)
 
+app.include_router(compare.router, prefix="/compare", tags=["Comparisons"])
+app.include_router(demo_passport.router, tags=["Demo"])
+app.include_router(spotify_auth.router, tags=["Auth"])
 
-class AchievementsRequest(BaseModel):
-    display_name: str
-    country_count: int  # distinct countries in the user's passport
+# NEW: community router (prefix is defined inside community.py)
+app.include_router(community.router, tags=["Community"])
 
-
-class Achievement(BaseModel):
-    id: str
-    name: str
-    description: str
-    unlocked: bool
-
-
-# ---------- IN-MEMORY STORE ----------
-
-# Resets whenever the server restarts
-COMMUNITY_FEED: List[FeedItem] = []
-
-
-# --- COMMUNITY ROUTES ---
-
-@router.post("/share", response_model=FeedItem)
-def share_to_community(payload: ShareRequest):
-    """
-    Create a new community post from the current track.
-    We DO NOT store Spotify tokens here. Only display name + track metadata.
-    """
-    if not payload.track_name or not payload.artist_name:
-        raise HTTPException(
-            sta
+@app.get("/")
+def root():
+    return {"message": "Tuniverse backend running"}
 
