@@ -150,4 +150,3 @@ def get_achievements(payload: AchievementsRequest):
     )
 
     return achievements
-
