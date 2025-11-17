@@ -47,13 +47,23 @@ SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET", "")
 SPOTIFY_REDIRECT_URI = os.getenv("SPOTIFY_REDIRECT_URI", "http://127.0.0.1:8000/auth/callback")
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://127.0.0.1:5500/")
 
-SCOPES = "user-read-email playlist-read-private user-top-read user-read-recently-played"
+# IMPORTANT: scopes now include user-read-currently-playing
+SCOPES = (
+    "user-read-email "
+    "playlist-read-private "
+    "user-top-read "
+    "user-read-recently-played "
+    "user-read-currently-playing"
+)
+
 TOKEN_URL = "https://accounts.spotify.com/api/token"
 AUTHORIZE_URL = "https://accounts.spotify.com/authorize"
+
 
 def _basic_auth_header() -> str:
     raw = f"{SPOTIFY_CLIENT_ID}:{SPOTIFY_CLIENT_SECRET}".encode()
     return "Basic " + base64.b64encode(raw).decode()
+
 
 @router.get("/auth/login", summary="Redirect to Spotify login", tags=["Auth"])
 def spotify_login(state: Optional[str] = None):
@@ -70,15 +80,28 @@ def spotify_login(state: Optional[str] = None):
     }
     return RedirectResponse(AUTHORIZE_URL + "?" + urllib.parse.urlencode(params))
 
-@router.get("/auth/callback", summary="Spotify callback → exchange code → redirect to web UI", tags=["Auth"])
-def spotify_callback(code: Optional[str] = Query(None), error: Optional[str] = Query(None), state: Optional[str] = Query(None)):
+
+@router.get(
+    "/auth/callback",
+    summary="Spotify callback → exchange code → redirect to web UI",
+    tags=["Auth"],
+)
+def spotify_callback(
+    code: Optional[str] = Query(None),
+    error: Optional[str] = Query(None),
+    state: Optional[str] = Query(None),
+):
     if error or not code:
         raise HTTPException(400, f"Spotify auth error: {error or 'missing code'}")
 
     token_res = requests.post(
         TOKEN_URL,
         headers={"Authorization": _basic_auth_header()},
-        data={"grant_type": "authorization_code", "code": code, "redirect_uri": SPOTIFY_REDIRECT_URI},
+        data={
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": SPOTIFY_REDIRECT_URI,
+        },
         timeout=15,
     )
     if token_res.status_code != 200:
@@ -94,16 +117,19 @@ def spotify_callback(code: Optional[str] = Query(None), error: Optional[str] = Q
 
     app_token = create_access_token(subject=me.get("id", "unknown"))
     target = urllib.parse.unquote_plus(state) if state else FRONTEND_URL
-    fragment = urllib.parse.urlencode({
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "app_token": app_token,
-        "display_name": me.get("display_name") or "",
-        "spotify_id": me.get("id") or ""
-    })
+    fragment = urllib.parse.urlencode(
+        {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "app_token": app_token,
+            "display_name": me.get("display_name") or "",
+            "spotify_id": me.get("id") or "",
+        }
+    )
     return RedirectResponse(f"{target}#{fragment}")
 
-# ---- passthroughs used by the web UI ----
+
+# ---- helper to talk to Spotify Web API ----
 
 def _sp_get(path: str, access_token: str, params: Optional[dict] = None):
     headers = {"Authorization": f"Bearer {access_token}"}
@@ -114,23 +140,84 @@ def _sp_get(path: str, access_token: str, params: Optional[dict] = None):
     except Exception:
         return {"error": f"http {r.status_code}", "text": r.text}
 
+
+# ---- passthroughs / API used by the web UI ----
+
 @router.get("/spotify/me", tags=["Spotify"])
 def get_me(access_token: str = Query(...)):
-    data = _sp_get("/me", access_token)
-    if isinstance(data, dict) and "error" in data:
-        raise HTTPException(400, f"/me failed: {data}")
-    return data
+    """
+    Return both the Spotify user profile AND (if available) the current track.
+
+    Response shape is tailored for the web UI:
+    {
+      "display_name": ...,
+      "id": ...,
+      "now_playing": {
+        "track_name": ...,
+        "artist_name": ...,
+        "album_name": ...,
+        "album_image_url": ...
+      } | null,
+      "raw_profile": { ...original /me response... }
+    }
+    """
+    profile = _sp_get("/me", access_token)
+    if isinstance(profile, dict) and "error" in profile:
+        raise HTTPException(400, f"/me failed: {profile}")
+
+    # Try to get currently playing track
+    playing = _sp_get("/me/player/currently-playing", access_token)
+
+    now_playing = None
+    # Spotify returns JSON like: { "item": { ...track... }, "is_playing": true, ... }
+    if isinstance(playing, dict) and playing.get("item"):
+        item = playing["item"]
+
+        track_name = item.get("name")
+        artists = item.get("artists") or []
+        artist_names = ", ".join(
+            a.get("name", "") for a in artists if isinstance(a, dict)
+        )
+
+        album = item.get("album") or {}
+        album_name = album.get("name")
+        images = album.get("images") or []
+        album_image_url = images[0].get("url") if images else None
+
+        now_playing = {
+            "track_name": track_name,
+            "artist_name": artist_names or "Unknown artist",
+            "album_name": album_name or "Unknown album",
+            "album_image_url": album_image_url,
+        }
+
+    return {
+        "display_name": profile.get("display_name"),
+        "id": profile.get("id"),
+        "now_playing": now_playing,
+        "raw_profile": profile,
+    }
+
 
 @router.get("/spotify/playlists", tags=["Spotify"])
 def get_playlists(access_token: str = Query(...), limit: int = 10, offset: int = 0):
-    data = _sp_get("/me/playlists", access_token, params={"limit": limit, "offset": offset})
+    data = _sp_get(
+        "/me/playlists",
+        access_token,
+        params={"limit": limit, "offset": offset},
+    )
     if isinstance(data, dict) and "error" in data:
         raise HTTPException(400, f"/me/playlists failed: {data}")
     return data
 
+
 @router.get("/spotify/top-artists", tags=["Spotify"])
 def get_top_artists(access_token: str = Query(...), limit: int = 10, offset: int = 0):
-    data = _sp_get("/me/top/artists", access_token, params={"limit": limit, "offset": offset})
+    data = _sp_get(
+        "/me/top/artists",
+        access_token,
+        params={"limit": limit, "offset": offset},
+    )
     if isinstance(data, dict) and "error" in data:
         raise HTTPException(400, f"/me/top/artists failed: {data}")
     return data
