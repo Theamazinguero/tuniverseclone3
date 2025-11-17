@@ -1,136 +1,39 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>Tuniverse</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <title>Tuniverse Community</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
-    <h1>Tuniverse</h1>
-    <p>Spotify world map, community sharing, and passport stamps</p>
-  </header>
 
-  <!-- 1) AUTH / SPOTIFY LOGIN -->
-  <section id="authSection">
-    <h2>1) Connect Spotify</h2>
+<h1>Tuniverse Community</h1>
 
-    <p>
-      Click “Login with Spotify”, approve access, and you’ll come back here already logged in.
-      No need to copy or paste any tokens – that’s handled automatically.
-    </p>
+<section>
+  <h2>User</h2>
+  <input id="displayNameInput" type="text" placeholder="Display Name">
+  <button onclick="setTestTrack()">Set Test Track</button>
+  <button onclick="setTestPassportCountries()">Set Test Passport Countries</button>
+  <p id="currentTrackLabel"></p>
+  <p id="passportSummaryLabel"></p>
+</section>
 
-    <div class="button-row">
-      <!-- Same-tab redirect so the hash comes back to THIS page -->
-      <button type="button" onclick="startSpotifyLogin()">
-        Login with Spotify
-      </button>
-      <button type="button" onclick="logoutSpotify()">
-        Logout
-      </button>
-    </div>
+<section>
+  <h2>Share to Community</h2>
+  <textarea id="communityMessageInput" placeholder="Say something"></textarea>
+  <button onclick="shareToCommunity()">Share</button>
+  <button onclick="loadCommunityFeed()">Refresh Feed</button>
+  <div id="communityFeed"></div>
+</section>
 
-    <!-- Optional: token as debug-only, hidden under a details toggle -->
-    <details style="margin-top:0.5rem;">
-      <summary style="cursor:pointer; font-size:0.8rem; color:#888;">
-        Debug options (token)
-      </summary>
-      <div class="field-group" style="margin-top:0.5rem;">
-        <label for="accessTokenInput">Access Token (debug only)</label>
-        <input
-          id="accessTokenInput"
-          type="text"
-          placeholder="Normally auto-filled after login. You can paste manually for debugging."
-        />
-      </div>
+<section>
+  <h2>Achievements</h2>
+  <button onclick="loadAchievements()">Refresh Achievements</button>
+  <div id="achievementsList"></div>
+</section>
 
-      <div class="button-row">
-        <button type="button" onclick="saveAccessToken()">
-          Save Token
-        </button>
-        <button type="button" onclick="fetchSpotifyMe()">
-          Load Profile & Current Track
-        </button>
-      </div>
-    </details>
+<script src="app.js"></script>
 
-    <div id="profileInfo"></div>
-    <div id="currentTrackInfo"></div>
-  </section>
-
-  <!-- 2) PASSPORT -->
-  <section id="passportSection">
-    <h2>2) Music Passport</h2>
-
-    <p>Load your passport based on your listening history.</p>
-
-    <div class="button-row">
-      <button type="button" onclick="loadPassport()">
-        Load Passport from Token
-      </button>
-    </div>
-
-    <div id="passportSummary"></div>
-    <ul id="passportCountryList"></ul>
-  </section>
-
-  <!-- 3) COMMUNITY -->
-  <section id="communitySection">
-    <h2>3) Community</h2>
-
-    <div class="field-group">
-      <label for="displayNameInput">Display Name</label>
-      <input
-        id="displayNameInput"
-        type="text"
-        placeholder="Name shown in community feed"
-      />
-    </div>
-
-    <p>
-      Share the track you’re currently listening to with a short message.
-      The current track is taken from the last successful "Load Profile & Current Track".
-    </p>
-
-    <div class="field-group">
-      <label for="communityMessageInput">Message (optional)</label>
-      <textarea
-        id="communityMessageInput"
-        rows="3"
-        placeholder="Say something about this track..."
-      ></textarea>
-    </div>
-
-    <div class="button-row">
-      <button type="button" onclick="shareToCommunity()">
-        Share to Community
-      </button>
-      <button type="button" onclick="loadCommunityFeed()">
-        Refresh Community Feed
-      </button>
-    </div>
-
-    <div id="communityFeed"></div>
-  </section>
-
-  <!-- 4) ACHIEVEMENTS / STAMPS -->
-  <section id="achievementsSection">
-    <h2>4) Passport Stamps</h2>
-
-    <p>
-      These unlock based on your passport countries and how much you post in the community.
-    </p>
-
-    <div class="button-row">
-      <button type="button" onclick="loadAchievements()">
-        Refresh Achievements
-      </button>
-    </div>
-
-    <div id="achievementsList"></div>
-  </section>
-
-  <script src="app.js"></script>
 </body>
 </html>
+
