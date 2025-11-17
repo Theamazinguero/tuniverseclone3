@@ -14,21 +14,23 @@ Created main to run backend code
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
 from routers import community
+from routers import spotify   # <-- REQUIRED NOW
 
 app = FastAPI()
 
-# CORS (allows frontend at 127.0.0.1:5500 to call FastAPI)
+# CORS needed so frontend can call backend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],   # you can tighten this later
-    allow_credentials=True,
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Routers
 app.include_router(community.router)
+app.include_router(spotify.router)
 
 
 @app.get("/")
