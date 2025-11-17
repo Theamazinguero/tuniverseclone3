@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -7,28 +8,36 @@
 </head>
 <body>
 
-<h1>Tuniverse Community</h1>
+<h1>Tuniverse</h1>
+
+<section>
+  <h2>Spotify</h2>
+  <input id="accessTokenInput" type="text" placeholder="Paste Spotify Access Token">
+  <button onclick="loadCurrentTrack()">Load Current Track</button>
+  <p id="currentTrackLabel"></p>
+</section>
 
 <section>
   <h2>User</h2>
   <input id="displayNameInput" type="text" placeholder="Display Name">
-  <button onclick="setTestTrack()">Set Test Track</button>
-  <button onclick="setTestPassportCountries()">Set Test Passport Countries</button>
-  <p id="currentTrackLabel"></p>
-  <p id="passportSummaryLabel"></p>
 </section>
 
 <section>
   <h2>Share to Community</h2>
+
   <textarea id="communityMessageInput" placeholder="Say something"></textarea>
+
   <button onclick="shareToCommunity()">Share</button>
   <button onclick="loadCommunityFeed()">Refresh Feed</button>
+
   <div id="communityFeed"></div>
 </section>
 
 <section>
   <h2>Achievements</h2>
+  <input id="countryCountInput" type="number" placeholder="# of Countries">
   <button onclick="loadAchievements()">Refresh Achievements</button>
+
   <div id="achievementsList"></div>
 </section>
 
@@ -36,4 +45,3 @@
 
 </body>
 </html>
-
