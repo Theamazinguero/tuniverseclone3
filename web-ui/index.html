@@ -2,50 +2,58 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Tuniverse</title>
+  <title>Tuniverse - Community & Stamps</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header>
     <h1>Tuniverse</h1>
-    <p>Music passport + community sharing (prototype)</p>
+    <p>Community sharing + passport stamps (prototype)</p>
   </header>
 
-  <!-- Access token + display name -->
+  <!-- Basic user setup -->
   <section id="userSection">
     <h2>User Setup</h2>
-    <div class="field-group">
-      <label for="accessTokenInput">Spotify Access Token</label>
-      <input
-        id="accessTokenInput"
-        type="text"
-        placeholder="Paste your Spotify access token here"
-      />
-    </div>
 
     <div class="field-group">
       <label for="displayNameInput">Display Name</label>
       <input
         id="displayNameInput"
         type="text"
-        placeholder="Name shown in community feed"
+        placeholder="Name shown in community feed and achievements"
       />
     </div>
 
-    <!-- This button is optional; it only matters if you already wired fetchCurrentTrack() in app.js -->
-    <button type="button" onclick="fetchCurrentTrack && fetchCurrentTrack()">
-      Refresh Current Track (if implemented)
-    </button>
+    <!-- Optional: for your real Spotify calls -->
+    <div class="field-group">
+      <label for="accessTokenInput">Spotify Access Token (optional for now)</label>
+      <input
+        id="accessTokenInput"
+        type="text"
+        placeholder="Paste your Spotify token if you use it elsewhere"
+      />
+    </div>
+
+    <!-- Testing helpers so you can verify everything without Spotify wired in -->
+    <div class="button-row">
+      <button type="button" onclick="setTestTrack()">
+        Set Test Track
+      </button>
+      <button type="button" onclick="setTestPassportCountries()">
+        Set Test Passport Countries
+      </button>
+    </div>
+
+    <p id="currentTrackLabel"></p>
+    <p id="passportSummaryLabel"></p>
   </section>
 
   <!-- Community share section -->
   <section id="communitySection">
     <h2>Community</h2>
 
-    <p>
-      Share the track you’re currently listening to with a short message.
-    </p>
+    <p>Share the track you’re currently listening to with a short message.</p>
 
     <div class="field-group">
       <label for="communityMessageInput">Message (optional)</label>
@@ -68,7 +76,23 @@
     <div id="communityFeed"></div>
   </section>
 
-  <!-- If you have other sections (map, passport, etc.), you can add them below -->
+  <!-- Achievements / stamps section -->
+  <section id="achievementsSection">
+    <h2>Passport Stamps</h2>
+
+    <p>
+      These unlock based on your passport countries and how much you post in the community.
+    </p>
+
+    <div class="button-row">
+      <!-- Later, you can replace loadPassport() with real passport loading -->
+      <button type="button" onclick="loadAchievements()">
+        Refresh Achievements
+      </button>
+    </div>
+
+    <div id="achievementsList"></div>
+  </section>
 
   <script src="app.js"></script>
 </body>
