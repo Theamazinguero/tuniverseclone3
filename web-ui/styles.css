@@ -1,7 +1,7 @@
 body {
   font-family: system-ui, sans-serif;
   margin: 1rem 2rem;
-  max-width: 900px;
+  max-width: 960px;
 }
 
 header {
@@ -32,15 +32,20 @@ textarea {
   margin: 0.5rem 0 1rem 0;
 }
 
-button {
+button,
+.button-like {
+  display: inline-block;
   margin-right: 0.5rem;
   padding: 0.4rem 0.8rem;
   border-radius: 4px;
   border: 1px solid #888;
   cursor: pointer;
+  text-decoration: none;
+  color: inherit;
 }
 
-button:hover {
+button:hover,
+.button-like:hover {
   filter: brightness(0.95);
 }
 
@@ -109,3 +114,4 @@ button:hover {
 .achievement-status {
   margin-top: 0.25rem;
 }
+
