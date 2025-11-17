@@ -17,30 +17,43 @@
     <h2>1) Connect Spotify</h2>
 
     <p>
-      Click login to go through Spotify auth. When redirected back with a token,
-      paste it below if it’s not auto-filled by your flow.
+      Click “Login with Spotify”, approve access, and you’ll come back here already logged in.
+      No need to copy or paste any tokens – that’s handled automatically.
     </p>
 
     <div class="button-row">
-      <a class="button-like" href="http://127.0.0.1:8000/auth/login" target="_blank">
+      <!-- Same-tab redirect so the hash comes back to THIS page -->
+      <button type="button" onclick="startSpotifyLogin()">
         Login with Spotify
-      </a>
-    </div>
-
-    <div class="field-group">
-      <label for="accessTokenInput">Access Token</label>
-      <input
-        id="accessTokenInput"
-        type="text"
-        placeholder="Paste access token here if needed"
-      />
-    </div>
-
-    <div class="button-row">
-      <button type="button" onclick="fetchSpotifyMe()">
-        Load Profile & Current Track
+      </button>
+      <button type="button" onclick="logoutSpotify()">
+        Logout
       </button>
     </div>
+
+    <!-- Optional: token as debug-only, hidden under a details toggle -->
+    <details style="margin-top:0.5rem;">
+      <summary style="cursor:pointer; font-size:0.8rem; color:#888;">
+        Debug options (token)
+      </summary>
+      <div class="field-group" style="margin-top:0.5rem;">
+        <label for="accessTokenInput">Access Token (debug only)</label>
+        <input
+          id="accessTokenInput"
+          type="text"
+          placeholder="Normally auto-filled after login. You can paste manually for debugging."
+        />
+      </div>
+
+      <div class="button-row">
+        <button type="button" onclick="saveAccessToken()">
+          Save Token
+        </button>
+        <button type="button" onclick="fetchSpotifyMe()">
+          Load Profile & Current Track
+        </button>
+      </div>
+    </details>
 
     <div id="profileInfo"></div>
     <div id="currentTrackInfo"></div>
