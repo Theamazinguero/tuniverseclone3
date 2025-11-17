@@ -1,92 +1,75 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Tuniverse — Web UI</title>
+  <meta charset="UTF-8" />
+  <title>Tuniverse</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    body { font-family: system-ui, sans-serif; margin:0; padding:0; background:#0f1221; color:#e9ecf1; }
-    header { padding:24px; background:linear-gradient(90deg,#5b8cff,#8d55ff); }
-    header h1 { margin:0 0 6px 0; font-size:28px; }
-    header .sub { margin:0; opacity:.9 }
-    main { padding: 20px; max-width: 960px; margin: 0 auto; }
-    .card { background:#171b2e; border:1px solid #2d3556; border-radius:12px; padding:16px 16px 12px; margin-bottom:18px; }
-    h2 { margin: 0 0 10px; font-size: 18px; }
-    .row { display:flex; gap:10px; align-items:center; flex-wrap: wrap; margin-bottom:10px; }
-    label { opacity:.9 }
-    input, button { padding:10px 12px; border-radius:8px; border:1px solid #2d3556; background:#0f1221; color:#e9ecf1; }
-    input { min-width: 280px; }
-    button { cursor:pointer; background:#2c3e8f; border-color:#3e4da6; }
-    button:hover { background:#3a50b7; }
-    button:disabled { opacity:.5; cursor:not-allowed; }
-    pre.out { white-space: pre-wrap; background:#0a0d1a; border:1px dashed #2d3556; padding:10px; border-radius:8px; min-height:52px; }
-    ul { margin:0; padding-left: 18px; }
-    small { opacity:.8 }
-    .ok { color:#8af2b0 }
-    .err { color:#ff9f9f }
-    .pill { padding:2px 8px; border-radius: 999px; border:1px solid #2d3556; background:#0a0d1a; }
-  </style>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header>
     <h1>Tuniverse</h1>
-    <p class="sub">Turn your listening into a world map.</p>
+    <p>Music passport + community sharing (prototype)</p>
   </header>
 
-  <main>
-    <!-- Connect Spotify -->
-    <section class="card">
-      <h2>1) Connect Spotify</h2>
-      <div class="row">
-        <span id="signedAs" class="pill">Not signed in</span>
-        <small>Backend: <span id="baseShow"></span></small>
-      </div>
-      <div class="row">
-        <button id="btnLogin">Login with Spotify</button>
-        <button id="btnLogout">Logout</button>
-      </div>
-      <div class="row">
-        <label>Access Token (debug, auto-filled after login)</label>
-        <input id="token" placeholder="auto-filled after login" />
-      </div>
-    </section>
+  <!-- Access token + display name -->
+  <section id="userSection">
+    <h2>User Setup</h2>
+    <div class="field-group">
+      <label for="accessTokenInput">Spotify Access Token</label>
+      <input
+        id="accessTokenInput"
+        type="text"
+        placeholder="Paste your Spotify access token here"
+      />
+    </div>
 
-    <!-- My Profile -->
-    <section class="card">
-      <h2>2) My Profile</h2>
-      <div class="row">
-        <button id="btnMe">Load My Profile</button>
-      </div>
-      <pre id="meOut" class="out"></pre>
-    </section>
+    <div class="field-group">
+      <label for="displayNameInput">Display Name</label>
+      <input
+        id="displayNameInput"
+        type="text"
+        placeholder="Name shown in community feed"
+      />
+    </div>
 
-    <!-- Playlists -->
-    <section class="card">
-      <h2>3) My Playlists</h2>
-      <div class="row">
-        <label>Limit</label>
-        <input id="limit" type="number" value="5" min="1" max="50" />
-        <button id="btnPlaylists">Fetch</button>
-      </div>
-      <ul id="playlists"></ul>
-    </section>
+    <!-- This button is optional; it only matters if you already wired fetchCurrentTrack() in app.js -->
+    <button type="button" onclick="fetchCurrentTrack && fetchCurrentTrack()">
+      Refresh Current Track (if implemented)
+    </button>
+  </section>
 
-    <!-- Music Passport -->
-    <section class="card">
-      <h2>4) My Music Passport</h2>
-      <div class="row">
-        <button id="btnPassportTop">Generate from Top Artists</button>
-        <button id="btnPassportRecent">Use Recently Played (fallback)</button>
-      </div>
-      <pre id="passOut" class="out"></pre>
-    </section>
-  </main>
+  <!-- Community share section -->
+  <section id="communitySection">
+    <h2>Community</h2>
 
-  <script src="./app.js"></script>
+    <p>
+      Share the track you’re currently listening to with a short message.
+    </p>
+
+    <div class="field-group">
+      <label for="communityMessageInput">Message (optional)</label>
+      <textarea
+        id="communityMessageInput"
+        rows="3"
+        placeholder="Say something about this track..."
+      ></textarea>
+    </div>
+
+    <div class="button-row">
+      <button type="button" onclick="shareToCommunity()">
+        Share to Community
+      </button>
+      <button type="button" onclick="loadCommunityFeed()">
+        Refresh Community Feed
+      </button>
+    </div>
+
+    <div id="communityFeed"></div>
+  </section>
+
+  <!-- If you have other sections (map, passport, etc.), you can add them below -->
+
+  <script src="app.js"></script>
 </body>
 </html>
-
-
-
-
-
