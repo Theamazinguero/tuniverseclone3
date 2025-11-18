@@ -62,7 +62,7 @@ function saveAccessToken() {
 // ---------------- SPOTIFY AUTH ----------------
 
 function loginWithSpotify() {
-    // This hits your FastAPI's /auth/login which should do the Spotify redirect.
+    // This hits FastAPI /auth/login from backend/spotify_auth.py
     window.location.href = `${BACKEND_BASE}/auth/login`;
 }
 
@@ -74,32 +74,31 @@ async function loadCurrentTrack() {
         return;
     }
 
-    const res = await fetch(`${BACKEND_BASE}/spotify/currently_playing`, {
-        headers: {
-            "Authorization": `Bearer ${accessToken}`
-        }
-    });
+    // Use your existing /spotify/me endpoint from spotify_auth.py
+    const url = `${BACKEND_BASE}/spotify/me?access_token=${encodeURIComponent(accessToken)}`;
+
+    const res = await fetch(url);
 
     if (!res.ok) {
         const txt = await res.text();
-        console.error("Error from /spotify/currently_playing:", txt);
-        alert("Failed to load current track from backend.");
+        console.error("Error from /spotify/me:", txt);
+        alert("Failed to load profile / current track from backend.");
         return;
     }
 
     const data = await res.json();
 
-    if (!data.playing) {
+    if (!data.now_playing) {
         document.getElementById("currentTrackLabel").textContent =
             "Nothing is currently playing.";
         currentTrack = null;
         return;
     }
 
-    currentTrack = data;
+    currentTrack = data.now_playing;
 
     document.getElementById("currentTrackLabel").textContent =
-        `${data.track_name} — ${data.artist_name}`;
+        `${currentTrack.track_name} — ${currentTrack.artist_name}`;
 }
 
 // ---------------- SHARE TO COMMUNITY ----------------
