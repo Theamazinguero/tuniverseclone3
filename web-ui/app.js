@@ -1,49 +1,82 @@
 const BACKEND_BASE = "http://127.0.0.1:8000";
 
 let accessToken = null;
+let appToken = null;
+let spotifyId = null;
 let currentTrack = null;
 
 // ---------------- TOKEN HANDLING ----------------
 
-// Get token from URL (query or hash), or from localStorage
 function initAuth() {
     const authStatus = document.getElementById("authStatus");
 
-    // 1) Look in URL fragment: #access_token=...
     const hash = window.location.hash;
-    let tokenFromUrl = null;
-    if (hash && hash.includes("access_token=")) {
-        const params = new URLSearchParams(hash.substring(1)); // strip '#'
-        tokenFromUrl = params.get("access_token");
+    let paramsFromHash = null;
+    if (hash && hash.length > 1) {
+        paramsFromHash = new URLSearchParams(hash.substring(1));
     }
 
-    // 2) Look in query string: ?access_token=...
-    if (!tokenFromUrl) {
-        const qs = new URLSearchParams(window.location.search);
-        tokenFromUrl = qs.get("access_token");
+    const qs = new URLSearchParams(window.location.search);
+
+    function getFromHashOrQuery(name) {
+        if (paramsFromHash && paramsFromHash.has(name)) {
+            return paramsFromHash.get(name);
+        }
+        if (qs.has(name)) {
+            return qs.get(name);
+        }
+        return null;
     }
+
+    const tokenFromUrl = getFromHashOrQuery("access_token");
+    const appTokenFromUrl = getFromHashOrQuery("app_token");
+    const displayNameFromUrl = getFromHashOrQuery("display_name");
+    const spotifyIdFromUrl = getFromHashOrQuery("spotify_id");
 
     if (tokenFromUrl) {
         accessToken = tokenFromUrl;
         localStorage.setItem("spotify_access_token", accessToken);
-        authStatus.textContent = "Access token received from redirect.";
-        // Clean the URL so token isn't sitting there forever
-        window.history.replaceState({}, document.title, window.location.pathname);
     } else {
-        // 3) Fall back to localStorage
         const stored = localStorage.getItem("spotify_access_token");
-        if (stored) {
-            accessToken = stored;
-            authStatus.textContent = "Using stored access token.";
-        } else {
-            authStatus.textContent = "Not logged in yet.";
-        }
+        if (stored) accessToken = stored;
     }
 
-    // Reflect token into the input for debugging
+    if (appTokenFromUrl) {
+        appToken = appTokenFromUrl;
+        localStorage.setItem("tuniverse_app_token", appToken);
+    } else {
+        const storedApp = localStorage.getItem("tuniverse_app_token");
+        if (storedApp) appToken = storedApp;
+    }
+
+    if (spotifyIdFromUrl) {
+        spotifyId = spotifyIdFromUrl;
+        localStorage.setItem("tuniverse_spotify_id", spotifyId);
+    } else {
+        const storedSpotifyId = localStorage.getItem("tuniverse_spotify_id");
+        if (storedSpotifyId) spotifyId = storedSpotifyId;
+    }
+
+    const displayInput = document.getElementById("displayNameInput");
+    if (displayNameFromUrl) {
+        if (displayInput) displayInput.value = displayNameFromUrl;
+        localStorage.setItem("tuniverse_display_name", displayNameFromUrl);
+    } else {
+        const storedName = localStorage.getItem("tuniverse_display_name");
+        if (storedName && displayInput) displayInput.value = storedName;
+    }
+
+    // Clean URL after parsing hash
+    if (paramsFromHash) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
     if (accessToken) {
+        authStatus.textContent = "Access token received / loaded.";
         const input = document.getElementById("accessTokenInput");
         if (input) input.value = accessToken;
+    } else {
+        authStatus.textContent = "Not logged in yet.";
     }
 }
 
@@ -62,7 +95,6 @@ function saveAccessToken() {
 // ---------------- SPOTIFY AUTH ----------------
 
 function loginWithSpotify() {
-    // This hits FastAPI /auth/login from spotify_auth.py
     window.location.href = `${BACKEND_BASE}/auth/login`;
 }
 
@@ -74,10 +106,6 @@ async function loadCurrentTrack() {
         return;
     }
 
-    // Use /spotify/me and give BOTH:
-    //  - query param: access_token=...
-    //  - header: Authorization: Bearer ...
-    // so it works whether the backend expects a query or a header.
     const url = `${BACKEND_BASE}/spotify/me?access_token=${encodeURIComponent(
         accessToken
     )}`;
@@ -97,14 +125,11 @@ async function loadCurrentTrack() {
 
     const data = await res.json();
 
-    // spotify_auth.py returns:
-    // { display_name, id, now_playing, raw_profile }
-    // but if your other spotify router returns a different shape, we handle both.
     const nowPlaying = data.now_playing || data.current_track || null;
 
     if (!nowPlaying) {
         document.getElementById("currentTrackLabel").textContent =
-            "Nothing is currently playing.";
+            "Nothing is currently playing (or no recent tracks found).";
         currentTrack = null;
         return;
     }
@@ -120,6 +145,123 @@ async function loadCurrentTrack() {
         `${currentTrack.track_name} — ${currentTrack.artist_name}`;
 }
 
+// ---------------- PASSPORT COUNTRIES ----------------
+
+async function loadPassportCountries() {
+    const container = document.getElementById("countriesList");
+    container.innerHTML = "";
+
+    const token = appToken || localStorage.getItem("tuniverse_app_token");
+    if (!token) {
+        container.innerHTML = "<p>No app token; make sure you logged in via Spotify in this app.</p>";
+        return;
+    }
+
+    // This assumes your backend has /passport/from_token?app_token=...
+    const url = `${BACKEND_BASE}/passport/from_token?app_token=${encodeURIComponent(
+        token
+    )}`;
+
+    const res = await fetch(url);
+
+    if (!res.ok) {
+        const txt = await res.text();
+        console.error("Error from /passport/from_token:", txt);
+        container.innerHTML = "<p>Failed to load passport countries.</p>";
+        return;
+    }
+
+    const data = await res.json();
+
+    // Try a few possible shapes: {countries: [...]}, {passport: [...]}, or just [...]
+    let countries = [];
+    if (Array.isArray(data)) {
+        countries = data;
+    } else if (Array.isArray(data.countries)) {
+        countries = data.countries;
+    } else if (Array.isArray(data.passport)) {
+        countries = data.passport;
+    }
+
+    if (!countries.length) {
+        container.innerHTML = "<p>No passport countries found.</p>";
+        return;
+    }
+
+    const ul = document.createElement("ul");
+
+    countries.forEach(c => {
+        const li = document.createElement("li");
+        const code = c.code || c.country_code || "";
+        const name = c.name || c.country_name || code || JSON.stringify(c);
+        const visits = c.visit_count || c.count || "";
+        li.textContent = visits
+            ? `${name} (${visits} visits)`
+            : name;
+        ul.appendChild(li);
+    });
+
+    container.appendChild(ul);
+}
+
+// ---------------- PLAYLISTS ----------------
+
+async function loadPlaylists() {
+    const container = document.getElementById("playlistsList");
+    container.innerHTML = "";
+
+    if (!accessToken) {
+        container.innerHTML = "<p>You must login with Spotify first.</p>";
+        return;
+    }
+
+    const url = `${BACKEND_BASE}/spotify/playlists?access_token=${encodeURIComponent(
+        accessToken
+    )}`;
+
+    const res = await fetch(url, {
+        headers: {
+            "Authorization": `Bearer ${accessToken}`
+        }
+    });
+
+    if (!res.ok) {
+        const txt = await res.text();
+        console.error("Error from /spotify/playlists:", txt);
+        container.innerHTML = "<p>Failed to load playlists.</p>";
+        return;
+    }
+
+    const data = await res.json();
+
+    let items = [];
+    if (Array.isArray(data)) {
+        items = data;
+    } else if (Array.isArray(data.items)) {
+        items = data.items;
+    }
+
+    if (!items.length) {
+        container.innerHTML = "<p>No playlists found.</p>";
+        return;
+    }
+
+    const ul = document.createElement("ul");
+
+    items.forEach(p => {
+        const li = document.createElement("li");
+        const name = p.name || "Unnamed playlist";
+        const owner = (p.owner && p.owner.display_name) || "";
+        const tracks = (p.tracks && p.tracks.total) || 0;
+        li.textContent = owner
+            ? `${name} — ${tracks} tracks (by ${owner})`
+            : `${name} — ${tracks} tracks`;
+        ul.appendChild(li);
+    });
+
+    container.appendChild(ul);
+}
+
 // ---------------- SHARE TO COMMUNITY ----------------
 
 async function shareToCommunity() {
@@ -128,7 +270,10 @@ async function shareToCommunity() {
         return;
     }
 
-    const displayName = document.getElementById("displayNameInput").value.trim() || "Anonymous";
+    const displayName = document.getElementById("displayNameInput").value.trim()
+        || localStorage.getItem("tuniverse_display_name")
+        || "Anonymous";
+
     const message = document.getElementById("communityMessageInput").value.trim();
 
     const payload = {
@@ -191,7 +336,10 @@ async function loadCommunityFeed() {
 // ---------------- ACHIEVEMENTS ----------------
 
 async function loadAchievements() {
-    const displayName = document.getElementById("displayNameInput").value.trim() || "Anonymous";
+    const displayName = document.getElementById("displayNameInput").value.trim()
+        || localStorage.getItem("tuniverse_display_name")
+        || "Anonymous";
+
     const countryCount = parseInt(document.getElementById("countryCountInput").value) || 0;
 
     const res = await fetch(`${BACKEND_BASE}/community/achievements`, {
@@ -237,4 +385,3 @@ window.addEventListener("DOMContentLoaded", () => {
     initAuth();
     loadCommunityFeed().catch(console.error);
 });
-
