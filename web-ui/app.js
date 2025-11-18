@@ -1,3 +1,4 @@
+
 const BACKEND_BASE = "http://127.0.0.1:8000";
 
 let accessToken = null;
@@ -157,8 +158,8 @@ async function loadPassportCountries() {
         return;
     }
 
-    // Assume backend route: GET /passport/from_token/{app_token}
-    const url = `${BACKEND_BASE}/passport/from_token/${encodeURIComponent(token)}`;
+    // Try: GET /passport/from_token?token=<app_token>
+    const url = `${BACKEND_BASE}/passport/from_token?token=${encodeURIComponent(token)}`;
 
     const res = await fetch(url);
 
@@ -382,6 +383,4 @@ window.addEventListener("DOMContentLoaded", () => {
     initAuth();
     loadCommunityFeed().catch(console.error);
 });
-
-
 
