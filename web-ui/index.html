@@ -70,6 +70,11 @@
 
                     <div class="hero-globe-wrapper">
                         <div class="hero-globe">
+                            <!-- fake continents to make it feel more earth-like -->
+                            <div class="globe-continent continent-1"></div>
+                            <div class="globe-continent continent-2"></div>
+                            <div class="globe-continent continent-3"></div>
+
                             <div class="globe-pin pin-1">
                                 <div class="avatar-circle"></div>
                             </div>
@@ -87,6 +92,7 @@
                 </div>
             </div>
 
+            <!-- Countries summary -->
             <section class="card">
                 <div class="card-header-row">
                     <h2 class="card-title">My Passport Countries</h2>
@@ -96,6 +102,20 @@
                 </div>
                 <div id="countriesList" class="card-body scroll-area">
                     <!-- Filled by app.js / loadPassportCountries() -->
+                </div>
+            </section>
+
+            <!-- Artists by country “folder” -->
+            <section class="card">
+                <div class="card-header-row">
+                    <h2 class="card-title">Artists by Country</h2>
+                </div>
+                <div id="artistsByCountryList" class="card-body scroll-area">
+                    <!-- You can have app.js populate this later with per-country artist lists -->
+                    <!-- Placeholder text so it doesn’t look empty -->
+                    <p class="status-text subtle">
+                        Artists grouped by country will appear here once wired up.
+                    </p>
                 </div>
             </section>
         </section>
@@ -264,4 +284,3 @@
 </script>
 </body>
 </html>
-
