@@ -10,28 +10,7 @@ Version 1.0 (10/03/2025):
 Created main to run backend code
 """
 
-"""
-Main Code Runner
-@Author: Emily Villareal
-@Version: 1.0
-@Since: 10/03/2025
-Usage:
-Main to run all the code
-Change Log:
-Version 1.0 (10/03/2025):
-Created main to run backend code
-"""
-"""
-Main Code Runner
-@Author: Emily Villareal
-@Version: 1.0
-@Since: 10/03/2025
-Usage:
-Main to run all the code
-Change Log:
-Version 1.0 (10/03/2025):
-Created main to run backend code
-"""
+
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
