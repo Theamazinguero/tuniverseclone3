@@ -25,4 +25,242 @@
                 <span class="nav-icon">🏠</span>
                 <span class="nav-label">Home</span>
             </button>
-            <button class="top-nav-item
+            <button class="top-nav-item" data-panel="panel-community">
+                <span class="nav-icon">👥</span>
+                <span class="nav-label">Community</span>
+            </button>
+            <button class="top-nav-item" data-panel="panel-profile">
+                <span class="nav-icon">🎧</span>
+                <span class="nav-label">Profile</span>
+            </button>
+            <button class="top-nav-item" data-panel="panel-passport">
+                <span class="nav-icon">🛂</span>
+                <span class="nav-label">Passport</span>
+            </button>
+        </nav>
+    </div>
+</header>
+
+<main class="page-main">
+    <div class="layout">
+
+        <!-- LEFT: HERO + PASSPORT GLOBE -->
+        <section class="column-left panel panel-active" id="panel-home">
+            <div class="hero-card">
+                <div class="hero-space-layer hero-stars-1"></div>
+                <div class="hero-space-layer hero-stars-2"></div>
+
+                <div class="hero-content">
+                    <div class="hero-text">
+                        <h1>Your Music Passport</h1>
+                        <p>See where your favorite artists come from and how your listening spans the globe.</p>
+
+                        <div class="hero-actions">
+                            <button class="btn primary-btn" onclick="loginWithSpotify()">
+                                Login with Spotify
+                            </button>
+                            <button class="btn secondary-btn" onclick="loadPassportCountries()">
+                                Load Countries
+                            </button>
+                        </div>
+
+                        <p id="authStatus" class="status-text">
+                            Not logged in yet.
+                        </p>
+                    </div>
+
+                    <div class="hero-globe-wrapper">
+                        <div class="hero-globe">
+                            <div class="globe-pin pin-1">
+                                <div class="avatar-circle"></div>
+                            </div>
+                            <div class="globe-pin pin-2">
+                                <div class="avatar-circle"></div>
+                            </div>
+                            <div class="globe-pin pin-3">
+                                <div class="avatar-circle"></div>
+                            </div>
+                            <div class="globe-pin pin-4">
+                                <div class="avatar-circle"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <section class="card">
+                <div class="card-header-row">
+                    <h2 class="card-title">My Passport Countries</h2>
+                    <button class="btn ghost-btn small" onclick="loadPassportCountries()">
+                        Refresh
+                    </button>
+                </div>
+                <div id="countriesList" class="card-body scroll-area">
+                    <!-- Filled by app.js / loadPassportCountries() -->
+                </div>
+            </section>
+        </section>
+
+        <!-- RIGHT COLUMN: TABS (Community / Profile / Passport) -->
+        <section class="column-right">
+
+            <!-- COMMUNITY PANEL -->
+            <section class="panel" id="panel-community">
+                <div class="card">
+                    <div class="card-header-row">
+                        <h2 class="card-title">Share to Community</h2>
+                    </div>
+
+                    <div class="card-body">
+                        <label class="field-label" for="displayNameInput">
+                            Display Name
+                        </label>
+                        <input id="displayNameInput"
+                               type="text"
+                               class="text-input"
+                               placeholder="Your name from Spotify">
+
+                        <label class="field-label" for="communityMessageInput">
+                            Say something about your track
+                        </label>
+                        <textarea id="communityMessageInput"
+                                  class="text-input"
+                                  rows="3"
+                                  placeholder="What does this song mean to you?"></textarea>
+
+                        <div class="btn-row">
+                            <button class="btn primary-btn" onclick="shareToCommunity()">
+                                Share to Community
+                            </button>
+                            <button class="btn ghost-btn" onclick="loadCommunityFeed()">
+                                Refresh Feed
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header-row">
+                        <h2 class="card-title">Community Feed</h2>
+                    </div>
+                    <div id="communityFeed" class="card-body scroll-area">
+                        <!-- Filled by loadCommunityFeed() -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- PROFILE / SPOTIFY PANEL -->
+            <section class="panel" id="panel-profile">
+                <div class="card">
+                    <div class="card-header-row">
+                        <h2 class="card-title">Spotify Connection</h2>
+                        <button class="btn ghost-btn small" onclick="loginWithSpotify()">
+                            Login
+                        </button>
+                    </div>
+
+                    <div class="card-body">
+                        <label class="field-label" for="accessTokenInput">
+                            Paste Spotify Access Token (fallback / debug)
+                        </label>
+                        <textarea id="accessTokenInput"
+                                  class="text-input"
+                                  rows="2"
+                                  placeholder="Paste token here"></textarea>
+
+                        <div class="btn-row">
+                            <button class="btn secondary-btn" onclick="saveAccessToken()">Save Token</button>
+                            <button class="btn secondary-btn" onclick="loadCurrentTrack()">Load Current Track</button>
+                        </div>
+
+                        <p id="currentTrackLabel" class="status-text subtle">
+                            No track loaded yet.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header-row">
+                        <h2 class="card-title">My Playlists</h2>
+                        <button class="btn ghost-btn small" onclick="loadPlaylists()">
+                            Load
+                        </button>
+                    </div>
+                    <div id="playlistsList" class="card-body scroll-area">
+                        <!-- Filled by loadPlaylists() -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- PASSPORT / ACHIEVEMENTS PANEL -->
+            <section class="panel" id="panel-passport">
+                <div class="card">
+                    <div class="card-header-row">
+                        <h2 class="card-title">Passport Achievements</h2>
+                    </div>
+
+                    <div class="card-body">
+                        <label class="field-label" for="countryCountInput">
+                            # of Countries (debug / override)
+                        </label>
+                        <input id="countryCountInput"
+                               type="number"
+                               min="0"
+                               class="text-input"
+                               placeholder="Number of countries in your passport">
+
+                        <button class="btn secondary-btn" style="margin-top: 8px;"
+                                onclick="loadAchievements()">
+                            Refresh Achievements
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header-row">
+                        <h2 class="card-title">Unlocked Stamps</h2>
+                    </div>
+                    <div id="achievementsList" class="card-body scroll-area">
+                        <!-- Filled by loadAchievements() -->
+                    </div>
+                </div>
+            </section>
+
+        </section>
+    </div>
+</main>
+
+<script src="app.js"></script>
+<script>
+    // Simple tab switching for the top nav
+    document.addEventListener("DOMContentLoaded", () => {
+        const navItems = document.querySelectorAll(".top-nav-item");
+        const panels = document.querySelectorAll(".panel");
+
+        function setActive(panelId) {
+            panels.forEach(p => {
+                if (p.id === panelId) {
+                    p.classList.add("panel-active");
+                } else {
+                    p.classList.remove("panel-active");
+                }
+            });
+            navItems.forEach(btn => {
+                if (btn.dataset.panel === panelId) {
+                    btn.classList.add("nav-active");
+                } else {
+                    btn.classList.remove("nav-active");
+                }
+            });
+        }
+
+        navItems.forEach(btn => {
+            btn.addEventListener("click", () => setActive(btn.dataset.panel));
+        });
+
+        // Default to Home
+        setActive("panel-home");
+    });
+</script>
+</body>
+</html>
