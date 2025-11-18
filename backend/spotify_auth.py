@@ -25,7 +25,7 @@ Usage:
 Spotify OAuth + simple Spotify passthrough endpoints used by the web UI.
 - GET  /auth/login         -> redirect to Spotify
 - GET  /auth/callback      -> exchange code, redirect to FRONTEND_URL with tokens in hash
-- GET  /spotify/me         -> profile + now_playing (from recently played) via Spotify API
+- GET  /spotify/me         -> profile + now_playing (from recently played only)
 - GET  /spotify/playlists  -> playlists via Spotify API (requires access_token)
 - GET  /spotify/top-artists-> top artists via Spotify API (requires access_token)
 """
@@ -49,6 +49,7 @@ SPOTIFY_REDIRECT_URI = os.getenv(
 )
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://127.0.0.1:5500/")
 
+# Scopes – we keep both, but we will only *use* recently played
 SCOPES = (
     "user-read-email "
     "playlist-read-private "
@@ -142,7 +143,7 @@ def _sp_get(path: str, access_token: str, params: Optional[dict] = None):
         return {"error": f"http {r.status_code}", "text": r.text}
 
 
-def _build_now_playing_from_item(item: dict) -> Optional[dict]:
+def _build_now_playing_from_item(item: dict):
     if not isinstance(item, dict):
         return None
 
@@ -171,18 +172,10 @@ def _build_now_playing_from_item(item: dict) -> Optional[dict]:
 @router.get("/spotify/me", tags=["Spotify"])
 def get_me(access_token: str = Query(...)):
     """
-    Return both the Spotify user profile AND now_playing.
+    Return the Spotify user profile AND now_playing.
 
-    now_playing is built from:
-    - /me/player/recently-played?limit=1 (most recently played track only)
-
-    Response shape:
-    {
-      "display_name": ...,
-      "id": ...,
-      "now_playing": { ... } | None,
-      "raw_profile": { ...original /me response... }
-    }
+    now_playing is taken ONLY from:
+    - /me/player/recently-played?limit=1 (most recently played track)
     """
     profile = _sp_get("/me", access_token)
     if isinstance(profile, dict) and "error" in profile:
@@ -229,4 +222,3 @@ def get_top_artists(access_token: str = Query(...), limit: int = 10, offset: int
     if isinstance(data, dict) and "error" in data:
         raise HTTPException(400, f"/me/top/artists failed: {data}")
     return data
-
