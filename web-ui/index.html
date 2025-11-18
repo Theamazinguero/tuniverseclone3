@@ -1,47 +1,79 @@
-
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Tuniverse Community</title>
-  <link rel="stylesheet" href="style.css">
+  <title>Tuniverse</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
 <h1>Tuniverse</h1>
 
+<!-- SPOTIFY AUTH + CURRENT TRACK -->
 <section>
   <h2>Spotify</h2>
-  <input id="accessTokenInput" type="text" placeholder="Paste Spotify Access Token">
-  <button onclick="loadCurrentTrack()">Load Current Track</button>
+
+  <!-- Real redirect to backend auth -->
+  <button type="button" onclick="loginWithSpotify()">
+    Login with Spotify
+  </button>
+
+  <p id="authStatus"></p>
+
+  <label>
+    Paste Spotify Access Token (fallback / debug)
+    <input id="accessTokenInput" type="text" placeholder="Spotify access token">
+  </label>
+
+  <button type="button" onclick="saveAccessToken()">
+    Save Token
+  </button>
+
+  <button type="button" onclick="loadCurrentTrack()">
+    Load Current Track
+  </button>
+
   <p id="currentTrackLabel"></p>
 </section>
 
+<!-- USER + COMMUNITY SHARE -->
 <section>
   <h2>User</h2>
-  <input id="displayNameInput" type="text" placeholder="Display Name">
+  <label>
+    Display Name
+    <input id="displayNameInput" type="text" placeholder="Display name">
+  </label>
 </section>
 
 <section>
   <h2>Share to Community</h2>
 
-  <textarea id="communityMessageInput" placeholder="Say something"></textarea>
+  <label>
+    Say something
+    <textarea id="communityMessageInput" placeholder="Say something about this track"></textarea>
+  </label>
 
-  <button onclick="shareToCommunity()">Share</button>
-  <button onclick="loadCommunityFeed()">Refresh Feed</button>
+  <button type="button" onclick="shareToCommunity()">Share</button>
+  <button type="button" onclick="loadCommunityFeed()">Refresh Feed</button>
 
   <div id="communityFeed"></div>
 </section>
 
+<!-- ACHIEVEMENTS -->
 <section>
   <h2>Achievements</h2>
-  <input id="countryCountInput" type="number" placeholder="# of Countries">
-  <button onclick="loadAchievements()">Refresh Achievements</button>
+
+  <label>
+    # of Countries (for now; can later auto-fill from passport API)
+    <input id="countryCountInput" type="number" placeholder="Number of countries in your passport">
+  </label>
+
+  <button type="button" onclick="loadAchievements()">Refresh Achievements</button>
 
   <div id="achievementsList"></div>
 </section>
 
 <script src="app.js"></script>
-
 </body>
 </html>
+
