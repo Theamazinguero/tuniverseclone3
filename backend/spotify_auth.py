@@ -25,7 +25,7 @@ Usage:
 Spotify OAuth + simple Spotify passthrough endpoints used by the web UI.
 - GET  /auth/login         -> redirect to Spotify
 - GET  /auth/callback      -> exchange code, redirect to FRONTEND_URL with tokens in hash
-- GET  /spotify/me         -> profile + now_playing (current or most recent) via Spotify API
+- GET  /spotify/me         -> profile + now_playing (from recently played) via Spotify API
 - GET  /spotify/playlists  -> playlists via Spotify API (requires access_token)
 - GET  /spotify/top-artists-> top artists via Spotify API (requires access_token)
 """
@@ -44,10 +44,11 @@ router = APIRouter()
 
 SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID", "")
 SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET", "")
-SPOTIFY_REDIRECT_URI = os.getenv("SPOTIFY_REDIRECT_URI", "http://127.0.0.1:8000/auth/callback")
+SPOTIFY_REDIRECT_URI = os.getenv(
+    "SPOTIFY_REDIRECT_URI", "http://127.0.0.1:8000/auth/callback"
+)
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://127.0.0.1:5500/")
 
-# IMPORTANT: scopes now include user-read-currently-playing and recently-played
 SCOPES = (
     "user-read-email "
     "playlist-read-private "
@@ -141,8 +142,6 @@ def _sp_get(path: str, access_token: str, params: Optional[dict] = None):
         return {"error": f"http {r.status_code}", "text": r.text}
 
 
-# ---- helpers to build now_playing ----
-
 def _build_now_playing_from_item(item: dict) -> Optional[dict]:
     if not isinstance(item, dict):
         return None
@@ -174,10 +173,8 @@ def get_me(access_token: str = Query(...)):
     """
     Return both the Spotify user profile AND now_playing.
 
-    now_playing is built as:
-    1. Try /me/player/currently-playing
-    2. If nothing is active, try /me/player/recently-played?limit=1
-    3. If still nothing, now_playing = None
+    now_playing is built from:
+    - /me/player/recently-played?limit=1 (most recently played track only)
 
     Response shape:
     {
@@ -191,23 +188,16 @@ def get_me(access_token: str = Query(...)):
     if isinstance(profile, dict) and "error" in profile:
         raise HTTPException(400, f"/me failed: {profile}")
 
-    # 1) currently playing
-    playing = _sp_get("/me/player/currently-playing", access_token)
+    # Only use most recently played
     now_playing = None
-
-    if isinstance(playing, dict) and playing.get("item"):
-        now_playing = _build_now_playing_from_item(playing["item"])
-
-    # 2) fallback: most recent track
-    if not now_playing:
-        recent = _sp_get("/me/player/recently-played", access_token, params={"limit": 1})
-        if isinstance(recent, dict):
-            items = recent.get("items") or []
-            if items:
-                track_info = items[0].get("track")
-                np = _build_now_playing_from_item(track_info)
-                if np:
-                    now_playing = np
+    recent = _sp_get("/me/player/recently-played", access_token, params={"limit": 1})
+    if isinstance(recent, dict):
+        items = recent.get("items") or []
+        if items:
+            track_info = items[0].get("track")
+            np = _build_now_playing_from_item(track_info)
+            if np:
+                now_playing = np
 
     return {
         "display_name": profile.get("display_name"),
@@ -218,7 +208,7 @@ def get_me(access_token: str = Query(...)):
 
 
 @router.get("/spotify/playlists", tags=["Spotify"])
-def get_playlists(access_token: str = Query(...), limit: int = 10, offset: int = 0):
+def get_playlists(access_token: str = Query(...), limit: int = 20, offset: int = 0):
     data = _sp_get(
         "/me/playlists",
         access_token,
@@ -239,3 +229,4 @@ def get_top_artists(access_token: str = Query(...), limit: int = 10, offset: int
     if isinstance(data, dict) and "error" in data:
         raise HTTPException(400, f"/me/top/artists failed: {data}")
     return data
+
