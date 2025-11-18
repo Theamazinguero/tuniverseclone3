@@ -1,99 +1,28 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Tuniverse</title>
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <title>Tuniverse</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+<div class="page-bg"></div>
 
-<h1>Tuniverse</h1>
+<header class="site-header">
+    <div class="header-inner">
+        <div class="logo-lockup">
+            <div class="logo-row">
+                <!-- Put your logo image in web-ui/logo.png -->
+                <img src="logo.png" alt="Tuniverse logo" class="logo-image">
+                <span class="logo-text">TUNIVERSE</span>
+            </div>
+            <span class="logo-tagline">Your music, mapped across the stars</span>
+        </div>
 
-<!-- SPOTIFY AUTH + CURRENT TRACK -->
-<section>
-  <h2>Spotify</h2>
-
-  <button type="button" onclick="loginWithSpotify()">
-    Login with Spotify
-  </button>
-  <p id="authStatus"></p>
-
-  <label>
-    Paste Spotify Access Token (fallback / debug)
-    <input id="accessTokenInput" type="text" placeholder="Spotify access token">
-  </label>
-
-  <button type="button" onclick="saveAccessToken()">
-    Save Token
-  </button>
-
-  <button type="button" onclick="loadCurrentTrack()">
-    Load Current Track
-  </button>
-
-  <p id="currentTrackLabel"></p>
-</section>
-
-<!-- USER -->
-<section>
-  <h2>User</h2>
-  <label>
-    Display Name
-    <input id="displayNameInput" type="text" placeholder="Display name">
-  </label>
-</section>
-
-<!-- PASSPORT COUNTRIES -->
-<section>
-  <h2>My Passport Countries</h2>
-
-  <button type="button" onclick="loadPassportCountries()">
-    Load Countries
-  </button>
-
-  <div id="countriesList"></div>
-</section>
-
-<!-- PLAYLISTS -->
-<section>
-  <h2>My Playlists</h2>
-
-  <button type="button" onclick="loadPlaylists()">
-    Load Playlists
-  </button>
-
-  <div id="playlistsList"></div>
-</section>
-
-<!-- COMMUNITY SHARE -->
-<section>
-  <h2>Share to Community</h2>
-
-  <label>
-    Say something
-    <textarea id="communityMessageInput" placeholder="Say something about this track"></textarea>
-  </label>
-
-  <button type="button" onclick="shareToCommunity()">Share</button>
-  <button type="button" onclick="loadCommunityFeed()">Refresh Feed</button>
-
-  <div id="communityFeed"></div>
-</section>
-
-<!-- ACHIEVEMENTS -->
-<section>
-  <h2>Achievements</h2>
-
-  <label>
-    # of Countries
-    <input id="countryCountInput" type="number" placeholder="Number of countries in your passport">
-  </label>
-
-  <button type="button" onclick="loadAchievements()">Refresh Achievements</button>
-
-  <div id="achievementsList"></div>
-</section>
-
-<script src="app.js"></script>
-</body>
-</html>
+        <nav class="top-nav">
+            <button class="top-nav-item nav-active" data-panel="panel-home">
+                <span class="nav-icon">🏠</span>
+                <span class="nav-label">Home</span>
+            </button>
+            <button class="top-nav-item
