@@ -15,13 +15,22 @@ Created main to run backend code
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-# IMPORTANT: correct import path for tuniverseclone3 structure
-from backend.routers import community
-from backend.routers import spotify
+# main.py lives inside the "backend" package, so we import from .routers
+from .routers import (
+    admin,
+    artists,
+    community,
+    compare,
+    demo_passport,
+    passport,
+    playlists,
+    spotify,
+    users,
+)
 
 app = FastAPI()
 
-# CORS middleware
+# Allow frontend (localhost:5500) to call the backend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -29,11 +38,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Register routers
-app.include_router(community.router)
-app.include_router(spotify.router)
+# Register all routers
+for router in [
+    admin.router,
+    artists.router,
+    community.router,
+    compare.router,
+    demo_passport.router,
+    passport.router,
+    playlists.router,
+    spotify.router,
+    users.router,
+]:
+    app.include_router(router)
+
 
 @app.get("/")
 def root():
     return {"status": "Tuniverse backend running"}
+
 
