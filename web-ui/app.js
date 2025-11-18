@@ -98,7 +98,7 @@ function loginWithSpotify() {
     window.location.href = `${BACKEND_BASE}/auth/login`;
 }
 
-// ---------------- LOAD CURRENT TRACK ----------------
+// ---------------- LOAD CURRENT TRACK (recent only) ----------------
 
 async function loadCurrentTrack() {
     if (!accessToken) {
@@ -119,7 +119,7 @@ async function loadCurrentTrack() {
     if (!res.ok) {
         const txt = await res.text();
         console.error("Error from /spotify/me:", txt);
-        alert("Failed to load profile / current track from backend.");
+        alert("Failed to load profile / recent track from backend.");
         return;
     }
 
@@ -129,7 +129,7 @@ async function loadCurrentTrack() {
 
     if (!nowPlaying) {
         document.getElementById("currentTrackLabel").textContent =
-            "Nothing is currently playing (or no recent tracks found).";
+            "No recent tracks found.";
         currentTrack = null;
         return;
     }
@@ -157,12 +157,14 @@ async function loadPassportCountries() {
         return;
     }
 
-    // This assumes your backend has /passport/from_token?app_token=...
-    const url = `${BACKEND_BASE}/passport/from_token?app_token=${encodeURIComponent(
-        token
-    )}`;
-
-    const res = await fetch(url);
+    // Most likely backend expects POST JSON: { "app_token": "<jwt>" }
+    const res = await fetch(`${BACKEND_BASE}/passport/from_token`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ app_token: token }),
+    });
 
     if (!res.ok) {
         const txt = await res.text();
@@ -173,7 +175,6 @@ async function loadPassportCountries() {
 
     const data = await res.json();
 
-    // Try a few possible shapes: {countries: [...]}, {passport: [...]}, or just [...]
     let countries = [];
     if (Array.isArray(data)) {
         countries = data;
@@ -385,3 +386,5 @@ window.addEventListener("DOMContentLoaded", () => {
     initAuth();
     loadCommunityFeed().catch(console.error);
 });
+
+
