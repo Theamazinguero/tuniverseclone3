@@ -62,7 +62,7 @@ function saveAccessToken() {
 // ---------------- SPOTIFY AUTH ----------------
 
 function loginWithSpotify() {
-    // This hits FastAPI /auth/login from backend/spotify_auth.py
+    // This hits FastAPI /auth/login from spotify_auth.py
     window.location.href = `${BACKEND_BASE}/auth/login`;
 }
 
@@ -74,10 +74,19 @@ async function loadCurrentTrack() {
         return;
     }
 
-    // Use your existing /spotify/me endpoint from spotify_auth.py
-    const url = `${BACKEND_BASE}/spotify/me?access_token=${encodeURIComponent(accessToken)}`;
+    // Use /spotify/me and give BOTH:
+    //  - query param: access_token=...
+    //  - header: Authorization: Bearer ...
+    // so it works whether the backend expects a query or a header.
+    const url = `${BACKEND_BASE}/spotify/me?access_token=${encodeURIComponent(
+        accessToken
+    )}`;
 
-    const res = await fetch(url);
+    const res = await fetch(url, {
+        headers: {
+            "Authorization": `Bearer ${accessToken}`
+        }
+    });
 
     if (!res.ok) {
         const txt = await res.text();
@@ -88,14 +97,24 @@ async function loadCurrentTrack() {
 
     const data = await res.json();
 
-    if (!data.now_playing) {
+    // spotify_auth.py returns:
+    // { display_name, id, now_playing, raw_profile }
+    // but if your other spotify router returns a different shape, we handle both.
+    const nowPlaying = data.now_playing || data.current_track || null;
+
+    if (!nowPlaying) {
         document.getElementById("currentTrackLabel").textContent =
             "Nothing is currently playing.";
         currentTrack = null;
         return;
     }
 
-    currentTrack = data.now_playing;
+    currentTrack = {
+        track_name: nowPlaying.track_name || nowPlaying.name || "Unknown track",
+        artist_name: nowPlaying.artist_name || nowPlaying.artist || "Unknown artist",
+        album_name: nowPlaying.album_name || nowPlaying.album || "Unknown album",
+        album_image_url: nowPlaying.album_image_url || null
+    };
 
     document.getElementById("currentTrackLabel").textContent =
         `${currentTrack.track_name} — ${currentTrack.artist_name}`;
@@ -218,3 +237,4 @@ window.addEventListener("DOMContentLoaded", () => {
     initAuth();
     loadCommunityFeed().catch(console.error);
 });
+
