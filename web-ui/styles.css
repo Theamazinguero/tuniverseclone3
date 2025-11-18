@@ -272,7 +272,7 @@ body {
     margin-bottom: 8px;
 }
 
-/* Globe */
+/* ===== GLOBE: more 3D, more landmasses ===== */
 
 .hero-globe-wrapper {
     display: flex;
@@ -284,64 +284,110 @@ body {
     width: 230px;
     height: 230px;
     border-radius: 50%;
-    background: radial-gradient(circle at 30% 20%, #bfe7ff 0%, #7cc0fa 40%, #3f7adf 75%, #163c96 100%);
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
-    border: 4px solid rgba(255, 255, 255, 0.7);
+    /* ocean shading with light from top-left */
+    background:
+        radial-gradient(circle at 25% 20%, #ffffff 0%, rgba(255,255,255,0.8) 10%, transparent 45%),
+        radial-gradient(circle at 30% 30%, #bfe7ff 0%, #7cc0fa 40%, #2563eb 75%, #111827 100%);
+    box-shadow:
+        0 10px 24px rgba(0, 0, 0, 0.45),
+        inset -25px -30px 40px rgba(15, 23, 42, 0.75); /* dark limb */
+    border: 4px solid rgba(255, 255, 255, 0.75);
     overflow: hidden;
+    transform: rotate(-18deg); /* slight tilt for that “planet” feel */
 }
 
-/* longitude / latitude rings */
-.hero-globe::before,
+/* Atmosphere glow */
+.hero-globe::before {
+    content: "";
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.5) 0%, transparent 60%);
+    mix-blend-mode: screen;
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+/* Subtle longitude/latitude ring */
 .hero-globe::after {
     content: "";
     position: absolute;
-    inset: 0;
+    inset: 10px;
     border-radius: 50%;
-    border: 1px solid rgba(255, 255, 255, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
-.hero-globe::after {
-    inset: 16px;
-}
+/* Continents: organic blobs with multiple shapes */
 
-/* fake continents to feel more earth-like */
-
+/* base style for all land blobs */
 .globe-continent {
     position: absolute;
-    background: radial-gradient(circle at 30% 30%, #a7f3d0 0%, #10b981 40%, #059669 80%);
-    opacity: 0.9;
+    background: radial-gradient(circle at 30% 30%, #bbf7d0 0%, #22c55e 35%, #15803d 80%);
+    opacity: 0.95;
     filter: blur(1px);
-    border-radius: 50%;
 }
 
-/* Rough “Americas” blob */
+/* Rough “Americas” */
 .continent-1 {
-    width: 80px;
-    height: 120px;
+    width: 90px;
+    height: 140px;
     top: 25%;
     left: 26%;
-    transform: rotate(-15deg);
+    border-radius: 60% 45% 55% 55%;
+    transform: rotate(-18deg);
+    box-shadow:
+        0 0 12px rgba(0, 0, 0, 0.3),
+        inset -10px -18px 25px rgba(22, 101, 52, 0.7); /* shadow for depth */
 }
 
-/* Rough “Eurasia/Africa” blob */
+/* Rough “Eurasia/Africa” */
 .continent-2 {
-    width: 120px;
-    height: 130px;
-    top: 18%;
+    width: 140px;
+    height: 145px;
+    top: 16%;
     left: 52%;
+    border-radius: 45% 55% 60% 40%;
     transform: rotate(12deg);
+    box-shadow:
+        0 0 12px rgba(0, 0, 0, 0.25),
+        inset -14px -20px 30px rgba(21, 128, 61, 0.75);
 }
 
-/* Small “Australia-ish / islands” blob */
+/* “Australia / SE Asia islands” */
 .continent-3 {
-    width: 50px;
-    height: 40px;
-    top: 65%;
-    left: 68%;
-    transform: rotate(-5deg);
+    width: 60px;
+    height: 60px;
+    top: 64%;
+    left: 70%;
+    border-radius: 55% 45% 60% 40%;
+    transform: rotate(-6deg);
+    box-shadow:
+        0 0 10px rgba(0, 0, 0, 0.25),
+        inset -6px -8px 15px rgba(21, 128, 61, 0.7);
 }
 
-/* pins */
+/* Extra tiny island chains to make it more map-like */
+.globe-continent.continent-4 {
+    width: 30px;
+    height: 30px;
+    top: 40%;
+    left: 72%;
+    border-radius: 60% 40% 50% 50%;
+    transform: rotate(8deg);
+    opacity: 0.85;
+}
+
+.globe-continent.continent-5 {
+    width: 26px;
+    height: 24px;
+    top: 55%;
+    left: 40%;
+    border-radius: 50% 55% 45% 60%;
+    transform: rotate(-12deg);
+    opacity: 0.85;
+}
+
+/* Pins for “where listeners / artists are” */
 
 .globe-pin {
     position: absolute;
@@ -363,16 +409,16 @@ body {
 .avatar-circle {
     width: 100%;
     height: 100%;
-    border-radius: 50%;
+    border-radius: 999px;
     border: 2px solid #ff4f7f;
-    background: linear-gradient(135deg, #111827, #4b5563);
+    background: radial-gradient(circle at 30% 20%, #f9fafb 0%, #9ca3af 35%, #111827 90%);
 }
 
-/* approximate placements */
-.pin-1 { top: 24%; left: 30%; }
-.pin-2 { top: 22%; left: 72%; }
-.pin-3 { top: 52%; left: 32%; }
-.pin-4 { top: 74%; left: 62%; }
+/* approximate placements (can be tuned to “match” regions) */
+.pin-1 { top: 26%; left: 30%; } /* N. America */
+.pin-2 { top: 24%; left: 72%; } /* Europe */
+.pin-3 { top: 50%; left: 35%; } /* S. America-ish */
+.pin-4 { top: 72%; left: 63%; } /* Australia-ish */
 
 /* Inputs / buttons */
 
