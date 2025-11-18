@@ -98,7 +98,7 @@ function loginWithSpotify() {
     window.location.href = `${BACKEND_BASE}/auth/login`;
 }
 
-// ---------------- LOAD CURRENT TRACK (recent only) ----------------
+// ---------------- LOAD RECENT TRACK ----------------
 
 async function loadCurrentTrack() {
     if (!accessToken) {
@@ -157,14 +157,10 @@ async function loadPassportCountries() {
         return;
     }
 
-    // Most likely backend expects POST JSON: { "app_token": "<jwt>" }
-    const res = await fetch(`${BACKEND_BASE}/passport/from_token`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ app_token: token }),
-    });
+    // Assume backend route: GET /passport/from_token/{app_token}
+    const url = `${BACKEND_BASE}/passport/from_token/${encodeURIComponent(token)}`;
+
+    const res = await fetch(url);
 
     if (!res.ok) {
         const txt = await res.text();
@@ -267,7 +263,7 @@ async function loadPlaylists() {
 
 async function shareToCommunity() {
     if (!currentTrack) {
-        alert("Load current track first.");
+        alert("Load current (recent) track first.");
         return;
     }
 
@@ -386,5 +382,6 @@ window.addEventListener("DOMContentLoaded", () => {
     initAuth();
     loadCommunityFeed().catch(console.error);
 });
+
 
 
