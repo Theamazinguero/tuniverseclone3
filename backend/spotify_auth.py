@@ -25,7 +25,7 @@ Usage:
 Spotify OAuth + simple Spotify passthrough endpoints used by the web UI.
 - GET  /auth/login         -> redirect to Spotify
 - GET  /auth/callback      -> exchange code, redirect to FRONTEND_URL with tokens in hash
-- GET  /spotify/me         -> profile via Spotify API (requires access_token)
+- GET  /spotify/me         -> profile + now_playing (current or most recent) via Spotify API
 - GET  /spotify/playlists  -> playlists via Spotify API (requires access_token)
 - GET  /spotify/top-artists-> top artists via Spotify API (requires access_token)
 """
@@ -47,7 +47,7 @@ SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET", "")
 SPOTIFY_REDIRECT_URI = os.getenv("SPOTIFY_REDIRECT_URI", "http://127.0.0.1:8000/auth/callback")
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://127.0.0.1:5500/")
 
-# IMPORTANT: scopes now include user-read-currently-playing
+# IMPORTANT: scopes now include user-read-currently-playing and recently-played
 SCOPES = (
     "user-read-email "
     "playlist-read-private "
@@ -141,23 +141,49 @@ def _sp_get(path: str, access_token: str, params: Optional[dict] = None):
         return {"error": f"http {r.status_code}", "text": r.text}
 
 
-# ---- passthroughs / API used by the web UI ----
+# ---- helpers to build now_playing ----
+
+def _build_now_playing_from_item(item: dict) -> Optional[dict]:
+    if not isinstance(item, dict):
+        return None
+
+    track_name = item.get("name")
+    artists = item.get("artists") or []
+    artist_names = ", ".join(
+        a.get("name", "") for a in artists if isinstance(a, dict)
+    )
+
+    album = item.get("album") or {}
+    album_name = album.get("name")
+    images = album.get("images") or []
+    album_image_url = images[0].get("url") if images else None
+
+    if not track_name:
+        return None
+
+    return {
+        "track_name": track_name,
+        "artist_name": artist_names or "Unknown artist",
+        "album_name": album_name or "Unknown album",
+        "album_image_url": album_image_url,
+    }
+
 
 @router.get("/spotify/me", tags=["Spotify"])
 def get_me(access_token: str = Query(...)):
     """
-    Return both the Spotify user profile AND (if available) the current track.
+    Return both the Spotify user profile AND now_playing.
 
-    Response shape is tailored for the web UI:
+    now_playing is built as:
+    1. Try /me/player/currently-playing
+    2. If nothing is active, try /me/player/recently-played?limit=1
+    3. If still nothing, now_playing = None
+
+    Response shape:
     {
       "display_name": ...,
       "id": ...,
-      "now_playing": {
-        "track_name": ...,
-        "artist_name": ...,
-        "album_name": ...,
-        "album_image_url": ...
-      } | null,
+      "now_playing": { ... } | None,
       "raw_profile": { ...original /me response... }
     }
     """
@@ -165,31 +191,23 @@ def get_me(access_token: str = Query(...)):
     if isinstance(profile, dict) and "error" in profile:
         raise HTTPException(400, f"/me failed: {profile}")
 
-    # Try to get currently playing track
+    # 1) currently playing
     playing = _sp_get("/me/player/currently-playing", access_token)
-
     now_playing = None
-    # Spotify returns JSON like: { "item": { ...track... }, "is_playing": true, ... }
+
     if isinstance(playing, dict) and playing.get("item"):
-        item = playing["item"]
+        now_playing = _build_now_playing_from_item(playing["item"])
 
-        track_name = item.get("name")
-        artists = item.get("artists") or []
-        artist_names = ", ".join(
-            a.get("name", "") for a in artists if isinstance(a, dict)
-        )
-
-        album = item.get("album") or {}
-        album_name = album.get("name")
-        images = album.get("images") or []
-        album_image_url = images[0].get("url") if images else None
-
-        now_playing = {
-            "track_name": track_name,
-            "artist_name": artist_names or "Unknown artist",
-            "album_name": album_name or "Unknown album",
-            "album_image_url": album_image_url,
-        }
+    # 2) fallback: most recent track
+    if not now_playing:
+        recent = _sp_get("/me/player/recently-played", access_token, params={"limit": 1})
+        if isinstance(recent, dict):
+            items = recent.get("items") or []
+            if items:
+                track_info = items[0].get("track")
+                np = _build_now_playing_from_item(track_info)
+                if np:
+                    now_playing = np
 
     return {
         "display_name": profile.get("display_name"),
