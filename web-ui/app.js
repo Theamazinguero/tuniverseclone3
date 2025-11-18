@@ -1,26 +1,98 @@
+const BACKEND_BASE = "http://127.0.0.1:8000";
+
+let accessToken = null;
 let currentTrack = null;
+
+// ---------------- TOKEN HANDLING ----------------
+
+// Get token from URL (query or hash), or from localStorage
+function initAuth() {
+    const authStatus = document.getElementById("authStatus");
+
+    // 1) Look in URL fragment: #access_token=...
+    const hash = window.location.hash;
+    let tokenFromUrl = null;
+    if (hash && hash.includes("access_token=")) {
+        const params = new URLSearchParams(hash.substring(1)); // strip '#'
+        tokenFromUrl = params.get("access_token");
+    }
+
+    // 2) Look in query string: ?access_token=...
+    if (!tokenFromUrl) {
+        const qs = new URLSearchParams(window.location.search);
+        tokenFromUrl = qs.get("access_token");
+    }
+
+    if (tokenFromUrl) {
+        accessToken = tokenFromUrl;
+        localStorage.setItem("spotify_access_token", accessToken);
+        authStatus.textContent = "Access token received from redirect.";
+        // Clean the URL so token isn't sitting there forever
+        window.history.replaceState({}, document.title, window.location.pathname);
+    } else {
+        // 3) Fall back to localStorage
+        const stored = localStorage.getItem("spotify_access_token");
+        if (stored) {
+            accessToken = stored;
+            authStatus.textContent = "Using stored access token.";
+        } else {
+            authStatus.textContent = "Not logged in yet.";
+        }
+    }
+
+    // Reflect token into the input for debugging
+    if (accessToken) {
+        const input = document.getElementById("accessTokenInput");
+        if (input) input.value = accessToken;
+    }
+}
+
+function saveAccessToken() {
+    const input = document.getElementById("accessTokenInput");
+    const token = input.value.trim();
+    if (!token) {
+        alert("Paste a token first.");
+        return;
+    }
+    accessToken = token;
+    localStorage.setItem("spotify_access_token", token);
+    document.getElementById("authStatus").textContent = "Token saved to localStorage.";
+}
+
+// ---------------- SPOTIFY AUTH ----------------
+
+function loginWithSpotify() {
+    // This hits your FastAPI's /auth/login which should do the Spotify redirect.
+    window.location.href = `${BACKEND_BASE}/auth/login`;
+}
 
 // ---------------- LOAD CURRENT TRACK ----------------
 
 async function loadCurrentTrack() {
-    const token = document.getElementById("accessTokenInput").value.trim();
-
-    if (!token) {
-        alert("Paste your Spotify token first.");
+    if (!accessToken) {
+        alert("You must login with Spotify or paste/save a token first.");
         return;
     }
 
-    const res = await fetch("http://127.0.0.1:8000/spotify/currently_playing", {
+    const res = await fetch(`${BACKEND_BASE}/spotify/currently_playing`, {
         headers: {
-            "Authorization": `Bearer ${token}`
+            "Authorization": `Bearer ${accessToken}`
         }
     });
+
+    if (!res.ok) {
+        const txt = await res.text();
+        console.error("Error from /spotify/currently_playing:", txt);
+        alert("Failed to load current track from backend.");
+        return;
+    }
 
     const data = await res.json();
 
     if (!data.playing) {
         document.getElementById("currentTrackLabel").textContent =
             "Nothing is currently playing.";
+        currentTrack = null;
         return;
     }
 
@@ -29,7 +101,6 @@ async function loadCurrentTrack() {
     document.getElementById("currentTrackLabel").textContent =
         `${data.track_name} — ${data.artist_name}`;
 }
-
 
 // ---------------- SHARE TO COMMUNITY ----------------
 
@@ -51,24 +122,42 @@ async function shareToCommunity() {
         message: message
     };
 
-    await fetch("http://127.0.0.1:8000/community/share", {
+    const res = await fetch(`${BACKEND_BASE}/community/share`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
     });
 
-    loadCommunityFeed();
-}
+    if (!res.ok) {
+        const txt = await res.text();
+        console.error("Error from /community/share:", txt);
+        alert("Failed to share to community.");
+        return;
+    }
 
+    await loadCommunityFeed();
+}
 
 // ---------------- COMMUNITY FEED ----------------
 
 async function loadCommunityFeed() {
-    const res = await fetch("http://127.0.0.1:8000/community/feed");
-    const posts = await res.json();
+    const res = await fetch(`${BACKEND_BASE}/community/feed`);
 
+    if (!res.ok) {
+        const txt = await res.text();
+        console.error("Error from /community/feed:", txt);
+        alert("Failed to load community feed.");
+        return;
+    }
+
+    const posts = await res.json();
     const container = document.getElementById("communityFeed");
     container.innerHTML = "";
+
+    if (!posts.length) {
+        container.innerHTML = "<p>No posts yet.</p>";
+        return;
+    }
 
     posts.forEach(post => {
         const div = document.createElement("div");
@@ -81,14 +170,13 @@ async function loadCommunityFeed() {
     });
 }
 
-
 // ---------------- ACHIEVEMENTS ----------------
 
 async function loadAchievements() {
     const displayName = document.getElementById("displayNameInput").value.trim() || "Anonymous";
     const countryCount = parseInt(document.getElementById("countryCountInput").value) || 0;
 
-    const res = await fetch("http://127.0.0.1:8000/community/achievements", {
+    const res = await fetch(`${BACKEND_BASE}/community/achievements`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -97,10 +185,22 @@ async function loadAchievements() {
         })
     });
 
+    if (!res.ok) {
+        const txt = await res.text();
+        console.error("Error from /community/achievements:", txt);
+        alert("Failed to load achievements.");
+        return;
+    }
+
     const achievements = await res.json();
 
     const container = document.getElementById("achievementsList");
     container.innerHTML = "";
+
+    if (!achievements.length) {
+        container.innerHTML = "<p>No achievements defined.</p>";
+        return;
+    }
 
     achievements.forEach(a => {
         const div = document.createElement("div");
@@ -112,3 +212,10 @@ async function loadAchievements() {
         container.appendChild(div);
     });
 }
+
+// ---------------- INIT ----------------
+
+window.addEventListener("DOMContentLoaded", () => {
+    initAuth();
+    loadCommunityFeed().catch(console.error);
+});
