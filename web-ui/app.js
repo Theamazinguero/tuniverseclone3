@@ -1,4 +1,3 @@
-
 const BACKEND_BASE = "http://127.0.0.1:8000";
 
 let accessToken = null;
@@ -99,7 +98,7 @@ function loginWithSpotify() {
     window.location.href = `${BACKEND_BASE}/auth/login`;
 }
 
-// ---------------- LOAD RECENT TRACK ----------------
+// ---------------- LOAD TRACK (not our focus, just leaving it wired) ----------------
 
 async function loadCurrentTrack() {
     if (!accessToken) {
@@ -146,20 +145,28 @@ async function loadCurrentTrack() {
         `${currentTrack.track_name} — ${currentTrack.artist_name}`;
 }
 
-// ---------------- PASSPORT COUNTRIES ----------------
+// ---------------- PASSPORT COUNTRIES — IMPORTANT BIT ----------------
 
 async function loadPassportCountries() {
     const container = document.getElementById("countriesList");
     container.innerHTML = "";
 
-    const token = appToken || localStorage.getItem("tuniverse_app_token");
-    if (!token) {
-        container.innerHTML = "<p>No app token; make sure you logged in via Spotify in this app.</p>";
+    if (!accessToken) {
+        container.innerHTML = "<p>You must login with Spotify first so we have an access token.</p>";
         return;
     }
 
-    // Try: GET /passport/from_token?token=<app_token>
-    const url = `${BACKEND_BASE}/passport/from_token?token=${encodeURIComponent(token)}`;
+    // backend/routers/passport.py:
+    // @router.get("/from_token")
+    // def passport_from_token(
+    //     access_token: str = Query(...),
+    //     limit: int = Query(8, ge=1, le=20),
+    // )
+    //
+    // So this MUST be "access_token=", not "token=" and not app_token.
+    const url = `${BACKEND_BASE}/passport/from_token?access_token=${encodeURIComponent(
+        accessToken
+    )}`;
 
     const res = await fetch(url);
 
@@ -171,35 +178,45 @@ async function loadPassportCountries() {
     }
 
     const data = await res.json();
+    console.log("Passport from_token response:", data);
 
-    let countries = [];
-    if (Array.isArray(data)) {
-        countries = data;
-    } else if (Array.isArray(data.countries)) {
-        countries = data.countries;
-    } else if (Array.isArray(data.passport)) {
-        countries = data.passport;
-    }
+    const countryCounts = data.country_counts || {};
+    const regionPercentages = data.region_percentages || {};
+    const totalArtists = data.total_artists || 0;
 
+    const countries = Object.keys(countryCounts);
     if (!countries.length) {
-        container.innerHTML = "<p>No passport countries found.</p>";
+        container.innerHTML = "<p>No passport countries found (no top artists mapped yet).</p>";
         return;
     }
 
-    const ul = document.createElement("ul");
+    const summary = document.createElement("p");
+    summary.textContent = `Total artists considered: ${totalArtists}`;
+    container.appendChild(summary);
 
-    countries.forEach(c => {
+    const ul = document.createElement("ul");
+    countries.forEach(country => {
         const li = document.createElement("li");
-        const code = c.code || c.country_code || "";
-        const name = c.name || c.country_name || code || JSON.stringify(c);
-        const visits = c.visit_count || c.count || "";
-        li.textContent = visits
-            ? `${name} (${visits} visits)`
-            : name;
+        li.textContent = `${country}: ${countryCounts[country]} artist(s)`;
         ul.appendChild(li);
     });
-
     container.appendChild(ul);
+
+    const regions = Object.keys(regionPercentages);
+    if (regions.length) {
+        const regionsTitle = document.createElement("p");
+        regionsTitle.textContent = "By region:";
+        container.appendChild(regionsTitle);
+
+        const ulReg = document.createElement("ul");
+        regions.forEach(region => {
+            const pct = (regionPercentages[region] * 100).toFixed(1);
+            const li = document.createElement("li");
+            li.textContent = `${region}: ${pct}%`;
+            ulReg.appendChild(li);
+        });
+        container.appendChild(ulReg);
+    }
 }
 
 // ---------------- PLAYLISTS ----------------
@@ -383,4 +400,3 @@ window.addEventListener("DOMContentLoaded", () => {
     initAuth();
     loadCommunityFeed().catch(console.error);
 });
-
