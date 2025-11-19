@@ -5,32 +5,160 @@ const LS_ACCESS_TOKEN_KEY = "tuniverse_access_token";
 const LS_APP_TOKEN_KEY = "tuniverse_app_token";
 const LS_DISPLAY_NAME_KEY = "tuniverse_display_name";
 
-/* ------------- UTIL: DOM HELPERS ------------- */
+/* ------------ Tuniverse Region Definitions ------------ */
+const REGION_ICON_MAP = {
+    "North America": "assets/northamerica.png",
+    "Caribbean": "assets/caribbean.png",
+    "South America": "assets/southamerica.png",
+    "Middle East": "assets/middleeast.png",
+    "South Asia": "assets/southasia.png",
+    "Southeast Asia": "assets/southeastasia.png",
+    "East Asia": "assets/eastasia.png",
+    "Africa": "assets/africa.png",
+    "Europe": null,
+    "Oceania": null,
+    "Unknown": null,
+};
+
+const COUNTRY_TO_TUNIVERSE_REGION = {
+    // North America
+    "US": "North America",
+    "USA": "North America",
+    "United States": "North America",
+    "Canada": "North America",
+    "CA": "North America",
+    "Montréal": "North America",
+    "Ottawa": "North America",
+    "Mexico": "North America",
+
+    // Caribbean
+    "Puerto Rico": "Caribbean",
+    "Jamaica": "Caribbean",
+    "Cuba": "Caribbean",
+    "Dominican Republic": "Caribbean",
+    "Trinidad and Tobago": "Caribbean",
+
+    // South America
+    "BR": "South America",
+    "Brazil": "South America",
+    "AR": "South America",
+    "Argentina": "South America",
+    "CL": "South America",
+    "Chile": "South America",
+    "CO": "South America",
+    "Colombia": "South America",
+    "Peru": "South America",
+
+    // Europe
+    "UK": "Europe",
+    "GB": "Europe",
+    "United Kingdom": "Europe",
+    "Ireland": "Europe",
+    "Germany": "Europe",
+    "DE": "Europe",
+    "France": "Europe",
+    "FR": "Europe",
+    "Spain": "Europe",
+    "ES": "Europe",
+    "Italy": "Europe",
+    "IT": "Europe",
+    "Netherlands": "Europe",
+    "Sweden": "Europe",
+    "Norway": "Europe",
+    "Finland": "Europe",
+    "Denmark": "Europe",
+    "Poland": "Europe",
+    "Portugal": "Europe",
+    "Russia": "Europe",
+    "PL": "Europe",
+
+    // Middle East
+    "Saudi Arabia": "Middle East",
+    "United Arab Emirates": "Middle East",
+    "UAE": "Middle East",
+    "Israel": "Middle East",
+    "Jordan": "Middle East",
+    "Lebanon": "Middle East",
+    "Qatar": "Middle East",
+    "Kuwait": "Middle East",
+    "Oman": "Middle East",
+    "Bahrain": "Middle East",
+    "Iran": "Middle East",
+    "Iraq": "Middle East",
+    "Syria": "Middle East",
+    "Yemen": "Middle East",
+
+    // South Asia
+    "IN": "South Asia",
+    "India": "South Asia",
+    "Pakistan": "South Asia",
+    "Bangladesh": "South Asia",
+    "Sri Lanka": "South Asia",
+    "Nepal": "South Asia",
+
+    // Southeast Asia
+    "TH": "Southeast Asia",
+    "Thailand": "Southeast Asia",
+    "Vietnam": "Southeast Asia",
+    "VN": "Southeast Asia",
+    "Malaysia": "Southeast Asia",
+    "Singapore": "Southeast Asia",
+    "Indonesia": "Southeast Asia",
+    "Philippines": "Southeast Asia",
+    "Cambodia": "Southeast Asia",
+    "Laos": "Southeast Asia",
+    "Myanmar": "Southeast Asia",
+
+    // East Asia
+    "JP": "East Asia",
+    "Japan": "East Asia",
+    "KR": "East Asia",
+    "South Korea": "East Asia",
+    "North Korea": "East Asia",
+    "CN": "East Asia",
+    "China": "East Asia",
+    "Taiwan": "East Asia",
+    "Hong Kong": "East Asia",
+
+    // Africa
+    "South Africa": "Africa",
+    "Nigeria": "Africa",
+    "Egypt": "Africa",
+    "Kenya": "Africa",
+    "Ghana": "Africa",
+    "Morocco": "Africa",
+    "Algeria": "Africa",
+    "Tunisia": "Africa",
+
+    // Oceania
+    "AU": "Oceania",
+    "Australia": "Oceania",
+    "NZ": "Oceania",
+    "New Zealand": "Oceania",
+};
+
+/* ------------ Helpers ------------ */
 function $(id) {
     return document.getElementById(id);
 }
 
-/* ------------- TOKEN HANDLING ------------- */
+/* ------------ Token Handling ------------ */
 function setAccessToken(token) {
     if (token) {
         localStorage.setItem(LS_ACCESS_TOKEN_KEY, token);
     }
 }
-
 function getAccessToken() {
     return localStorage.getItem(LS_ACCESS_TOKEN_KEY) || "";
 }
-
 function setAppToken(token) {
     if (token) {
         localStorage.setItem(LS_APP_TOKEN_KEY, token);
     }
 }
-
 function getAppToken() {
     return localStorage.getItem(LS_APP_TOKEN_KEY) || "";
 }
-
 function setDisplayName(name) {
     if (name) {
         localStorage.setItem(LS_DISPLAY_NAME_KEY, name);
@@ -38,11 +166,6 @@ function setDisplayName(name) {
         if (input) input.value = name;
     }
 }
-
-/**
- * Parse hash fragment from Spotify redirect:
- * #access_token=...&refresh_token=...&app_token=...&display_name=...&spotify_id=...
- */
 function parseAuthFragment() {
     if (!window.location.hash || window.location.hash.length <= 1) {
         return {};
@@ -59,12 +182,11 @@ function parseAuthFragment() {
     return params;
 }
 
-/* ------------- INIT ON LOAD ------------- */
+/* ------------ Init ------------ */
 window.addEventListener("DOMContentLoaded", () => {
     const authStatus = $("authStatus");
-
-    // 1) handle redirect fragment (Spotify callback)
     const fragParams = parseAuthFragment();
+
     if (fragParams.access_token) {
         setAccessToken(fragParams.access_token);
         setAppToken(fragParams.app_token || "");
@@ -72,18 +194,13 @@ window.addEventListener("DOMContentLoaded", () => {
         if (authStatus) {
             authStatus.textContent = "Access token received / loaded.";
         }
-        // clean up the URL bar
         history.replaceState(null, "", window.location.pathname);
     } else {
         const token = getAccessToken();
-        if (token) {
-            if (authStatus) {
-                authStatus.textContent = "Access token loaded from previous session.";
-            }
-        } else {
-            if (authStatus) {
-                authStatus.textContent = "Not logged in yet.";
-            }
+        if (token && authStatus) {
+            authStatus.textContent = "Access token loaded from previous session.";
+        } else if (authStatus) {
+            authStatus.textContent = "Not logged in yet.";
         }
         const savedName = localStorage.getItem(LS_DISPLAY_NAME_KEY);
         if (savedName && $("displayNameInput")) {
@@ -92,7 +209,7 @@ window.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-/* ------------- AUTH / SPOTIFY ------------- */
+/* ------------ Auth / Spotify ------------ */
 function loginWithSpotify() {
     window.location.href = `${API_BASE}/auth/login`;
 }
@@ -129,7 +246,6 @@ async function loadCurrentTrack() {
             }
             return;
         }
-
         const data = await res.json();
         console.log("spotify/me:", data);
 
@@ -189,7 +305,23 @@ async function loadPlaylists() {
     }
 }
 
-/* ------------- PASSPORT ------------- */
+/* ------------ Passport ------------ */
+
+function mapCountryToRegion(countryNameRaw) {
+    if (!countryNameRaw) return "Unknown";
+    const key = countryNameRaw.trim();
+
+    if (COUNTRY_TO_TUNIVERSE_REGION[key]) {
+        return COUNTRY_TO_TUNIVERSE_REGION[key];
+    }
+    // Try uppercase code
+    const upper = key.toUpperCase();
+    if (COUNTRY_TO_TUNIVERSE_REGION[upper]) {
+        return COUNTRY_TO_TUNIVERSE_REGION[upper];
+    }
+    return "Unknown";
+}
+
 async function loadPassportCountries() {
     const token = getAccessToken();
     if (!token) {
@@ -202,27 +334,49 @@ async function loadPassportCountries() {
         countriesBox.innerHTML = `<p class="placeholder-text">Loading passport snapshot…</p>`;
     }
 
-    const url = `${API_BASE}/passport/from_token?access_token=${encodeURIComponent(token)}&limit=8`;
+    const passportUrl = `${API_BASE}/passport/from_token?access_token=${encodeURIComponent(token)}&limit=8`;
+    const topArtistsUrl = `${API_BASE}/spotify/top-artists?access_token=${encodeURIComponent(token)}&limit=1`;
+
     try {
-        const res = await fetch(url);
-        if (!res.ok) {
-            const text = await res.text();
-            console.error("passport/from_token error:", res.status, text);
+        const [passportRes, topRes] = await Promise.all([
+            fetch(passportUrl),
+            fetch(topArtistsUrl),
+        ]);
+
+        // Handle passport snapshot
+        if (!passportRes.ok) {
+            const text = await passportRes.text();
+            console.error("passport/from_token error:", passportRes.status, text);
             if (countriesBox) {
                 countriesBox.innerHTML =
                     `<p class="placeholder-text">Failed to load passport countries.</p>`;
             }
-            return;
+        } else {
+            const passportData = await passportRes.json();
+            console.log("passport snapshot:", passportData);
+            renderPassportCountries(passportData);
+            updatePassportStats(passportData);
+            updateArtistsByCountry(passportData);
         }
 
-        const data = await res.json();
-        console.log("passport snapshot:", data);
-
-        renderPassportCountries(data);
-        updatePassportStats(data);
-        updateArtistsByCountry(data);
+        // Handle top artist
+        if (topRes.ok) {
+            const topData = await topRes.json();
+            const items = topData.items || [];
+            const first = items[0];
+            const name = first && first.name ? first.name : null;
+            const statTop = $("statTopArtist");
+            if (statTop) {
+                statTop.textContent = name || "No top artist data";
+            }
+        } else {
+            const statTop = $("statTopArtist");
+            if (statTop) {
+                statTop.textContent = "No top artist data";
+            }
+        }
     } catch (err) {
-        console.error("passport fetch failed:", err);
+        console.error("loadPassportCountries failed:", err);
         if (countriesBox) {
             countriesBox.innerHTML =
                 `<p class="placeholder-text">Failed to load passport countries.</p>`;
@@ -230,13 +384,26 @@ async function loadPassportCountries() {
     }
 }
 
+function buildRegionCounts(countryCounts) {
+    const regionCounts = {};
+    let totalArtists = 0;
+
+    for (const [country, count] of Object.entries(countryCounts)) {
+        const c = Number(count) || 0;
+        if (!c) continue;
+        totalArtists += c;
+        const region = mapCountryToRegion(country);
+        regionCounts[region] = (regionCounts[region] || 0) + c;
+    }
+    return { regionCounts, totalArtists };
+}
+
 function renderPassportCountries(data) {
     const countriesBox = $("countriesList");
     if (!countriesBox) return;
 
     const countryCounts = data.country_counts || {};
-    const regionPerc = data.region_percentages || {};
-    const totalArtists = data.total_artists || 0;
+    const { regionCounts, totalArtists } = buildRegionCounts(countryCounts);
     const numCountries = Object.keys(countryCounts).length;
 
     const lines = [];
@@ -253,12 +420,20 @@ function renderPassportCountries(data) {
         }
     }
 
-    const regions = Object.entries(regionPerc);
-    if (regions.length) {
-        lines.push(`<p><strong>By region:</strong></p>`);
-        for (const [region, frac] of regions) {
-            const pct = (frac * 100).toFixed(1);
-            lines.push(`<p>${region}: ${pct}%</p>`);
+    const regionEntries = Object.entries(regionCounts).filter(
+        ([region]) => region !== "Unknown"
+    );
+    const unknownCount = regionCounts["Unknown"] || 0;
+
+    if (regionEntries.length || unknownCount) {
+        lines.push(`<p><strong>By Tuniverse region:</strong></p>`);
+        for (const [region, count] of regionEntries) {
+            const pct = totalArtists ? ((count / totalArtists) * 100).toFixed(1) : "0.0";
+            lines.push(`<p>${region}: ${count} artist(s) – ${pct}%</p>`);
+        }
+        if (unknownCount) {
+            const pct = totalArtists ? ((unknownCount / totalArtists) * 100).toFixed(1) : "0.0";
+            lines.push(`<p>Unknown: ${unknownCount} artist(s) – ${pct}%</p>`);
         }
     }
 
@@ -272,35 +447,43 @@ function renderPassportCountries(data) {
 }
 
 function updatePassportStats(data) {
-    const topArtistEl = $("statTopArtist");
+    const topArtistEl = $("statTopArtist"); // only used for existence check
     const totalEl = $("statTotalArtists");
     const favRegionEl = $("statFavRegion");
+    const favRegionIcon = $("favRegionIcon");
 
-    if (!topArtistEl || !totalEl || !favRegionEl) {
-        // If the HTML IDs are missing, don't crash
-        return;
-    }
+    if (!totalEl || !favRegionEl || !favRegionIcon) return;
 
-    const total = data.total_artists ?? 0;
-    totalEl.textContent = total;
+    const countryCounts = data.country_counts || {};
+    const { regionCounts, totalArtists } = buildRegionCounts(countryCounts);
 
-    // Favorite region: highest fraction in region_percentages
-    let favRegion = "—";
-    if (data.region_percentages) {
-        let best = null;
-        let bestVal = -1;
-        for (const [region, fraction] of Object.entries(data.region_percentages)) {
-            if (fraction > bestVal) {
-                bestVal = fraction;
-                best = region;
-            }
+    totalEl.textContent = totalArtists;
+
+    // pick favorite region from Tuniverse regionCounts (excluding Unknown)
+    let favRegion = "Unknown";
+    let bestCount = 0;
+    for (const [region, count] of Object.entries(regionCounts)) {
+        if (region === "Unknown") continue;
+        if (count > bestCount) {
+            bestCount = count;
+            favRegion = region;
         }
-        if (best) favRegion = best;
     }
     favRegionEl.textContent = favRegion;
 
-    // There is no explicit top artist in this payload, so just describe what it's using.
-    topArtistEl.textContent = "From Spotify top artists";
+    const iconPath = REGION_ICON_MAP[favRegion] || null;
+    if (iconPath) {
+        favRegionIcon.src = iconPath;
+        favRegionIcon.style.visibility = "visible";
+    } else {
+        favRegionIcon.src = "";
+        favRegionIcon.style.visibility = "hidden";
+    }
+
+    // if top artist element exists but hasn't been set by top-artists call, leave as "—"
+    if (topArtistEl && !topArtistEl.textContent) {
+        topArtistEl.textContent = "—";
+    }
 }
 
 function updateArtistsByCountry(data) {
@@ -331,12 +514,11 @@ function updateArtistsByCountry(data) {
     box.innerHTML = html;
 }
 
-/* ------------- COMMUNITY ------------- */
+/* ------------ Community ------------ */
 async function shareToCommunity() {
     const msgBox = $("communityMessageInput");
     const summaryBox = $("countriesList");
     const displayName = $("displayNameInput") ? $("displayNameInput").value.trim() : "";
-
     const appToken = getAppToken();
 
     if (!msgBox || !summaryBox) return;
@@ -432,8 +614,7 @@ async function loadCommunityFeed() {
     }
 }
 
-/* ------------- ACHIEVEMENTS ------------- */
-
+/* ------------ Achievements ------------ */
 function computeAchievements(countryCount) {
     const n = countryCount || 0;
     const list = [];
