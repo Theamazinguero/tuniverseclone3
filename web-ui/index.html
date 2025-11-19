@@ -29,20 +29,7 @@
                     </button>
                 </div>
 
-                <div class="field-group">
-                    <label for="accessTokenInput">Paste Spotify Access Token (debug)</label>
-                    <textarea id="accessTokenInput" class="input-textarea" rows="3"
-                              placeholder="Access token from Spotify redirect…"></textarea>
-                    <div class="button-row">
-                        <button type="button" class="btn secondary" onclick="saveAccessToken()">
-                            Save Token
-                        </button>
-                        <button type="button" class="btn ghost" onclick="loadCurrentTrack()">
-                            Load Profile / Debug
-                        </button>
-                    </div>
-                    <p id="currentTrackLabel" class="small-label">No recent track loaded.</p>
-                </div>
+                <!-- (Debug token textarea removed for a cleaner look) -->
 
                 <div class="divider"></div>
 
@@ -99,10 +86,11 @@
                 </div>
 
                 <div class="passport-body">
+                    <!-- SNAPSHOT -->
                     <div class="field-group">
                         <div class="button-row">
                             <button type="button" class="btn primary" onclick="loadPassportCountries()">
-                                Load Countries
+                                Load Passport
                             </button>
                         </div>
                         <div id="countriesList" class="scroll-box">
@@ -114,6 +102,7 @@
 
                     <div class="divider soft"></div>
 
+                    <!-- ARTISTS BY REGION -->
                     <h3 class="card-subtitle">Artists by Region</h3>
                     <div id="artistsByCountryList" class="scroll-box">
                         <p class="placeholder-text">
@@ -217,4 +206,5 @@
     <script src="app.js"></script>
 </body>
 </html>
+
 
