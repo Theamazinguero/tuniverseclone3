@@ -1,466 +1,503 @@
 // web-ui/app.js
 
-const BACKEND_URL = "http://127.0.0.1:8000";
+const API_BASE = "http://127.0.0.1:8000";
+const LS_ACCESS_TOKEN_KEY = "tuniverse_access_token";
+const LS_APP_TOKEN_KEY = "tuniverse_app_token";
+const LS_DISPLAY_NAME_KEY = "tuniverse_display_name";
 
-let lastPassportSnapshot = null;
-
-// -------- helpers --------
+/* ------------- UTIL: DOM HELPERS ------------- */
 function $(id) {
     return document.getElementById(id);
 }
 
-function getStored(key) {
-    return window.localStorage.getItem(key) || null;
-}
-
-function setStored(key, value) {
-    if (value == null) return;
-    window.localStorage.setItem(key, value);
+/* ------------- TOKEN HANDLING ------------- */
+function setAccessToken(token) {
+    if (token) {
+        localStorage.setItem(LS_ACCESS_TOKEN_KEY, token);
+    }
 }
 
 function getAccessToken() {
-    const fromInput = $("accessTokenInput").value.trim();
-    if (fromInput) return fromInput;
-    return getStored("spotify_access_token");
+    return localStorage.getItem(LS_ACCESS_TOKEN_KEY) || "";
 }
 
-// -------- initial hash handling (Spotify callback) --------
-function handleHash() {
-    if (!window.location.hash) return;
-    const hash = window.location.hash.substring(1);
-    const params = new URLSearchParams(hash);
-
-    const accessToken = params.get("access_token");
-    const refreshToken = params.get("refresh_token");
-    const appToken = params.get("app_token");
-    const displayName = params.get("display_name");
-    const spotifyId = params.get("spotify_id");
-
-    if (accessToken) {
-        setStored("spotify_access_token", accessToken);
-        $("accessTokenInput").value = accessToken;
+function setAppToken(token) {
+    if (token) {
+        localStorage.setItem(LS_APP_TOKEN_KEY, token);
     }
-    if (refreshToken) setStored("spotify_refresh_token", refreshToken);
-    if (appToken) setStored("app_token", appToken);
-    if (spotifyId) setStored("spotify_id", spotifyId);
-
-    if (displayName) {
-        $("displayNameInput").value = displayName;
-        setStored("display_name", displayName);
-    }
-
-    if (accessToken) {
-        $("authStatus").textContent = "Access token received / loaded.";
-    }
-
-    // Clean hash so refreshes look nicer
-    window.history.replaceState({}, document.title, window.location.pathname);
 }
 
+function getAppToken() {
+    return localStorage.getItem(LS_APP_TOKEN_KEY) || "";
+}
+
+function setDisplayName(name) {
+    if (name) {
+        localStorage.setItem(LS_DISPLAY_NAME_KEY, name);
+        const input = $("displayNameInput");
+        if (input) input.value = name;
+    }
+}
+
+/**
+ * Parse hash fragment from Spotify redirect:
+ * #access_token=...&refresh_token=...&app_token=...&display_name=...&spotify_id=...
+ */
+function parseAuthFragment() {
+    if (!window.location.hash || window.location.hash.length <= 1) {
+        return {};
+    }
+    const frag = window.location.hash.substring(1);
+    const params = {};
+    for (const part of frag.split("&")) {
+        const [rawKey, rawVal] = part.split("=");
+        if (!rawKey) continue;
+        const key = decodeURIComponent(rawKey);
+        const val = rawVal ? decodeURIComponent(rawVal) : "";
+        params[key] = val;
+    }
+    return params;
+}
+
+/* ------------- INIT ON LOAD ------------- */
 window.addEventListener("DOMContentLoaded", () => {
-    handleHash();
+    const authStatus = $("authStatus");
 
-    // Prefill from storage if present
-    const savedAccess = getStored("spotify_access_token");
-    if (savedAccess && !$("accessTokenInput").value) {
-        $("accessTokenInput").value = savedAccess;
-        $("authStatus").textContent = "Access token loaded from storage.";
-    }
-
-    const savedName = getStored("display_name");
-    if (savedName && !$("displayNameInput").value) {
-        $("displayNameInput").value = savedName;
+    // 1) handle redirect fragment (Spotify callback)
+    const fragParams = parseAuthFragment();
+    if (fragParams.access_token) {
+        setAccessToken(fragParams.access_token);
+        setAppToken(fragParams.app_token || "");
+        setDisplayName(fragParams.display_name || "");
+        if (authStatus) {
+            authStatus.textContent = "Access token received / loaded.";
+        }
+        // clean up the URL bar
+        history.replaceState(null, "", window.location.pathname);
+    } else {
+        const token = getAccessToken();
+        if (token) {
+            if (authStatus) {
+                authStatus.textContent = "Access token loaded from previous session.";
+            }
+        } else {
+            if (authStatus) {
+                authStatus.textContent = "Not logged in yet.";
+            }
+        }
+        const savedName = localStorage.getItem(LS_DISPLAY_NAME_KEY);
+        if (savedName && $("displayNameInput")) {
+            $("displayNameInput").value = savedName;
+        }
     }
 });
 
-// -------- AUTH / SPOTIFY --------
+/* ------------- AUTH / SPOTIFY ------------- */
 function loginWithSpotify() {
-    window.location.href = `${BACKEND_URL}/auth/login`;
+    window.location.href = `${API_BASE}/auth/login`;
 }
 
 function saveAccessToken() {
-    const token = $("accessTokenInput").value.trim();
+    const input = $("accessTokenInput");
+    if (!input) return;
+    const token = input.value.trim();
     if (!token) {
-        alert("Paste a Spotify access token first.");
+        alert("Paste an access token first.");
         return;
     }
-    setStored("spotify_access_token", token);
-    $("authStatus").textContent = "Access token saved.";
+    setAccessToken(token);
+    if ($("authStatus")) {
+        $("authStatus").textContent = "Access token saved from textarea.";
+    }
 }
 
 async function loadCurrentTrack() {
     const token = getAccessToken();
     if (!token) {
-        alert("Missing Spotify access token.");
+        alert("No Spotify access token yet. Login with Spotify first.");
         return;
     }
-    $("currentTrackLabel").textContent = "Loading recent track…";
 
+    const url = `${API_BASE}/spotify/me?access_token=${encodeURIComponent(token)}`;
     try {
-        const res = await fetch(
-            `${BACKEND_URL}/spotify/me?access_token=${encodeURIComponent(token)}`
-        );
+        const res = await fetch(url);
         if (!res.ok) {
-            const txt = await res.text();
-            $("currentTrackLabel").textContent = "Failed to load profile / track.";
-            console.error("spotify/me error:", txt);
+            const text = await res.text();
+            console.error("spotify/me error:", res.status, text);
+            if ($("currentTrackLabel")) {
+                $("currentTrackLabel").textContent = "Failed to load profile.";
+            }
             return;
         }
+
         const data = await res.json();
+        console.log("spotify/me:", data);
 
-        if (data.display_name) {
-            $("displayNameInput").value = data.display_name;
-            setStored("display_name", data.display_name);
-        }
+        const displayName = data.display_name || "";
+        setDisplayName(displayName);
 
-        if (data.now_playing) {
-            const np = data.now_playing;
+        const nowPlaying = data.now_playing;
+        if (nowPlaying && $("currentTrackLabel")) {
             $("currentTrackLabel").textContent =
-                `${np.track_name} — ${np.artist_name} (${np.album_name})`;
-        } else {
-            $("currentTrackLabel").textContent = "No recent tracks found.";
+                `Listening to ${nowPlaying.track_name} – ${nowPlaying.artist_name}`;
+        } else if ($("currentTrackLabel")) {
+            $("currentTrackLabel").textContent = "No recent track info from Spotify.";
         }
     } catch (err) {
-        console.error(err);
-        $("currentTrackLabel").textContent = "Error talking to backend.";
+        console.error("spotify/me failed:", err);
+        if ($("currentTrackLabel")) {
+            $("currentTrackLabel").textContent = "Error loading profile.";
+        }
     }
 }
 
-// -------- PLAYLISTS --------
 async function loadPlaylists() {
     const token = getAccessToken();
     if (!token) {
-        alert("Missing Spotify access token.");
+        alert("No Spotify access token yet.");
         return;
     }
-    const listEl = $("playlistsList");
-    listEl.innerHTML = `<p class="placeholder-text">Loading playlists…</p>`;
+    const container = $("playlistsList");
+    if (!container) return;
+    container.innerHTML = `<p class="placeholder-text">Loading playlists…</p>`;
 
+    const url = `${API_BASE}/spotify/playlists?access_token=${encodeURIComponent(token)}&limit=20`;
     try {
-        const res = await fetch(
-            `${BACKEND_URL}/spotify/playlists?access_token=${encodeURIComponent(token)}`
-        );
+        const res = await fetch(url);
         if (!res.ok) {
-            const txt = await res.text();
-            listEl.innerHTML = `<p class="placeholder-text">Failed to load playlists.</p>`;
-            console.error("playlists error:", txt);
+            const text = await res.text();
+            console.error("spotify/playlists error:", res.status, text);
+            container.innerHTML = `<p class="placeholder-text">Failed to load playlists.</p>`;
             return;
         }
         const data = await res.json();
         const items = data.items || [];
-
         if (!items.length) {
-            listEl.innerHTML = `<p class="placeholder-text">No playlists found.</p>`;
+            container.innerHTML = `<p class="placeholder-text">No playlists found.</p>`;
             return;
         }
-
         const lines = items.map((pl) => {
+            const name = pl.name || "Untitled playlist";
+            const tracks = (pl.tracks && pl.tracks.total) || 0;
             const owner = pl.owner && pl.owner.display_name ? pl.owner.display_name : "Unknown";
-            return `<p>${pl.name} — ${pl.tracks?.total ?? 0} tracks (by ${owner})</p>`;
+            return `<p>${name} — ${tracks} tracks (by ${owner})</p>`;
         });
-        listEl.innerHTML = lines.join("");
+        container.innerHTML = lines.join("");
     } catch (err) {
-        console.error(err);
-        listEl.innerHTML = `<p class="placeholder-text">Error loading playlists.</p>`;
+        console.error("playlists failed:", err);
+        container.innerHTML = `<p class="placeholder-text">Failed to load playlists.</p>`;
     }
 }
 
-// -------- PASSPORT / COUNTRIES / STATS / ARTISTS BY COUNTRY --------
+/* ------------- PASSPORT ------------- */
 async function loadPassportCountries() {
     const token = getAccessToken();
     if (!token) {
-        alert("Missing Spotify access token.");
+        alert("No Spotify access token yet.");
         return;
     }
 
-    const countriesEl = $("countriesList");
-    const artistsEl = $("artistsByCountryList");
-    countriesEl.innerHTML = `<p class="placeholder-text">Building passport from top artists…</p>`;
-    artistsEl.innerHTML = `<p class="placeholder-text">Loading artists by country…</p>`;
+    const countriesBox = $("countriesList");
+    if (countriesBox) {
+        countriesBox.innerHTML = `<p class="placeholder-text">Loading passport snapshot…</p>`;
+    }
 
+    const url = `${API_BASE}/passport/from_token?access_token=${encodeURIComponent(token)}&limit=8`;
     try {
-        const res = await fetch(
-            `${BACKEND_URL}/passport/from_token?access_token=${encodeURIComponent(token)}`
-        );
+        const res = await fetch(url);
         if (!res.ok) {
-            const txt = await res.text();
-            countriesEl.innerHTML = `<p class="placeholder-text">Failed to load passport.</p>`;
-            artistsEl.innerHTML = `<p class="placeholder-text">Failed to load passport.</p>`;
-            console.error("passport/from_token error:", txt);
+            const text = await res.text();
+            console.error("passport/from_token error:", res.status, text);
+            if (countriesBox) {
+                countriesBox.innerHTML =
+                    `<p class="placeholder-text">Failed to load passport countries.</p>`;
+            }
             return;
         }
+
         const data = await res.json();
-        lastPassportSnapshot = data;
+        console.log("passport snapshot:", data);
 
         renderPassportCountries(data);
-        renderArtistsByCountry(data);
         updatePassportStats(data);
-
-        // Fill # of countries for Achievements auto
-        const cc = data.country_counts || {};
-        const distinct = Object.keys(cc).length;
-        $("countryCountInput").value = String(distinct);
+        updateArtistsByCountry(data);
     } catch (err) {
-        console.error(err);
-        countriesEl.innerHTML = `<p class="placeholder-text">Error loading passport.</p>`;
-        artistsEl.innerHTML = `<p class="placeholder-text">Error loading passport.</p>`;
+        console.error("passport fetch failed:", err);
+        if (countriesBox) {
+            countriesBox.innerHTML =
+                `<p class="placeholder-text">Failed to load passport countries.</p>`;
+        }
     }
 }
 
 function renderPassportCountries(data) {
-    const el = $("countriesList");
-    const cc = data.country_counts || {};
-    const rp = data.region_percentages || {};
-    const total = data.total_artists || 0;
+    const countriesBox = $("countriesList");
+    if (!countriesBox) return;
 
-    if (!Object.keys(cc).length) {
-        el.innerHTML = `<p class="placeholder-text">No artists found for passport snapshot.</p>`;
-        return;
-    }
+    const countryCounts = data.country_counts || {};
+    const regionPerc = data.region_percentages || {};
+    const totalArtists = data.total_artists || 0;
+    const numCountries = Object.keys(countryCounts).length;
 
-    let html = "";
-    html += `<p>Passport snapshot: <strong>${total}</strong> artists across <strong>${Object.keys(cc).length}</strong> countries.</p>`;
+    const lines = [];
+    lines.push(
+        `<p>Passport snapshot: ${totalArtists} artist${totalArtists === 1 ? "" : "s"} across ${numCountries} countr${numCountries === 1 ? "y" : "ies"}.</p>`
+    );
 
-    html += `<div class="divider soft"></div>`;
-    html += `<p><strong>Countries:</strong></p>`;
-    for (const [country, count] of Object.entries(cc)) {
-        html += `<p>${country}: ${count} artist(s)</p>`;
-    }
-
-    html += `<div class="divider soft"></div>`;
-    html += `<p><strong>By region:</strong></p>`;
-    if (!Object.keys(rp).length) {
-        html += `<p>Region data not available.</p>`;
+    if (numCountries === 0) {
+        lines.push(`<p class="placeholder-text">No countries inferred yet.</p>`);
     } else {
-        for (const [region, frac] of Object.entries(rp)) {
+        lines.push(`<p><strong>By country:</strong></p>`);
+        for (const [country, count] of Object.entries(countryCounts)) {
+            lines.push(`<p>${country}: ${count} artist(s)</p>`);
+        }
+    }
+
+    const regions = Object.entries(regionPerc);
+    if (regions.length) {
+        lines.push(`<p><strong>By region:</strong></p>`);
+        for (const [region, frac] of regions) {
             const pct = (frac * 100).toFixed(1);
-            html += `<p>${region}: ${pct}%</p>`;
+            lines.push(`<p>${region}: ${pct}%</p>`);
         }
     }
 
-    el.innerHTML = html;
-}
+    countriesBox.innerHTML = lines.join("");
 
-function renderArtistsByCountry(data) {
-    const el = $("artistsByCountryList");
-    const map = data.artists_by_country || {};
-
-    if (!Object.keys(map).length) {
-        el.innerHTML = `<p class="placeholder-text">No artist details returned.</p>`;
-        return;
+    // auto-fill #countries for achievements (based on distinct countries)
+    const countryCountInput = $("countryCountInput");
+    if (countryCountInput) {
+        countryCountInput.value = String(numCountries);
     }
-
-    let html = "";
-    for (const [country, artists] of Object.entries(map)) {
-        html += `<div class="artists-country-group">`;
-        html += `<div class="artists-country-title">${country}</div>`;
-        html += `<ul class="artists-country-list">`;
-        for (const name of artists) {
-            html += `<li>${name}</li>`;
-        }
-        html += `</ul></div>`;
-    }
-    el.innerHTML = html;
 }
 
 function updatePassportStats(data) {
-    const totalArtists = data.total_artists || 0;
-    $("statTotalArtists").textContent = String(totalArtists);
+    const topArtistEl = $("statTopArtist");
+    const totalEl = $("statTotalArtists");
+    const favRegionEl = $("statFavRegion");
 
-    // Top artist (Spotify orders by "most listened")
-    let topArtist = "—";
-    if (Array.isArray(data.top_artists) && data.top_artists.length > 0) {
-        topArtist = data.top_artists[0];
+    if (!topArtistEl || !totalEl || !favRegionEl) {
+        // If the HTML IDs are missing, don't crash
+        return;
     }
-    $("statTopArtist").textContent = topArtist;
 
-    // Favorite region (max region_percentages)
-    const rp = data.region_percentages || {};
+    const total = data.total_artists ?? 0;
+    totalEl.textContent = total;
+
+    // Favorite region: highest fraction in region_percentages
     let favRegion = "—";
-    let maxVal = 0;
-    for (const [region, value] of Object.entries(rp)) {
-        if (value > maxVal) {
-            maxVal = value;
-            favRegion = region;
+    if (data.region_percentages) {
+        let best = null;
+        let bestVal = -1;
+        for (const [region, fraction] of Object.entries(data.region_percentages)) {
+            if (fraction > bestVal) {
+                bestVal = fraction;
+                best = region;
+            }
         }
+        if (best) favRegion = best;
     }
-    if (favRegion === "Unknown") {
-        favRegion = "Mixed / Unknown";
-    }
-    $("statFavRegion").textContent = favRegion;
+    favRegionEl.textContent = favRegion;
+
+    // There is no explicit top artist in this payload, so just describe what it's using.
+    topArtistEl.textContent = "From Spotify top artists";
 }
 
-// -------- ACHIEVEMENTS --------
-function loadAchievements() {
-    const el = $("achievementsList");
-    const raw = $("countryCountInput").value.trim();
-    const n = raw ? parseInt(raw, 10) : 0;
+function updateArtistsByCountry(data) {
+    const box = $("artistsByCountryList");
+    if (!box) return;
 
-    if (!n || n <= 0) {
-        el.innerHTML = `<p class="placeholder-text">No countries yet – explore more music to unlock stamps!</p>`;
+    const countryCounts = data.country_counts || {};
+    const entries = Object.entries(countryCounts);
+    if (!entries.length) {
+        box.innerHTML =
+            `<p class="placeholder-text">No countries yet – load your passport first.</p>`;
         return;
     }
 
-    const items = [];
+    const html = entries
+        .map(
+            ([country, count]) => `
+        <div class="artists-country-group">
+            <div class="artists-country-title">${country}</div>
+            <ul class="artists-country-list">
+                <li>${count} artist(s) detected from this country.</li>
+            </ul>
+        </div>
+    `
+        )
+        .join("");
 
-    if (n >= 1) {
-        items.push({
-            name: "First Stamp",
-            desc: "You’ve visited your first musical country.",
-        });
-    }
-    if (n >= 3) {
-        items.push({
-            name: "Regional Explorer",
-            desc: "You’re starting to hop between regions.",
-        });
-    }
-    if (n >= 5) {
-        items.push({
-            name: "Frequent Flyer",
-            desc: "Your passport is filling up fast.",
-        });
-    }
-    if (n >= 10) {
-        items.push({
-            name: "Globe Trotter",
-            desc: "Double-digit country count achieved.",
-        });
-    }
-    if (n >= 15) {
-        items.push({
-            name: "Cosmic Voyager",
-            desc: "You’re basically orbiting the Tuniverse.",
-        });
-    }
-
-    let html = "";
-    for (const it of items) {
-        html += `<div class="achievement-item"><strong>${it.name}</strong><br/><span>${it.desc}</span></div>`;
-    }
-    el.innerHTML = html;
+    box.innerHTML = html;
 }
 
-// -------- COMMUNITY --------
+/* ------------- COMMUNITY ------------- */
 async function shareToCommunity() {
-    const feedEl = $("communityFeed");
-    const message = $("communityMessageInput").value.trim();
-    const displayName = $("displayNameInput").value.trim() || "Anonymous Voyager";
-    const appToken = getStored("app_token");
-    const snapshot = lastPassportSnapshot;
+    const msgBox = $("communityMessageInput");
+    const summaryBox = $("countriesList");
+    const displayName = $("displayNameInput") ? $("displayNameInput").value.trim() : "";
 
-    if (!appToken) {
-        alert("No app token found. Log in with Spotify first so the backend can know who you are.");
-        return;
-    }
+    const appToken = getAppToken();
 
-    if (!snapshot) {
-        alert("Load your passport first so we can attach it to the post.");
-        return;
-    }
+    if (!msgBox || !summaryBox) return;
 
+    const message = msgBox.value.trim();
     if (!message) {
-        alert("Write a short message for the community.");
+        alert("Write something to share.");
         return;
     }
+
+    const summaryText = summaryBox.textContent || "";
 
     const payload = {
-        app_token: appToken,
-        display_name: displayName,
-        message: message,
-        passport: {
-            country_counts: snapshot.country_counts || {},
-            region_percentages: snapshot.region_percentages || {},
-            total_artists: snapshot.total_artists || 0,
-        },
+        display_name: displayName || "Anonymous traveler",
+        message,
+        passport_summary: summaryText.slice(0, 500),
     };
 
+    const headers = { "Content-Type": "application/json" };
+    if (appToken) {
+        headers["X-App-Token"] = appToken;
+    }
+
     try {
-        const res = await fetch(`${BACKEND_URL}/community/share`, {
+        const res = await fetch(`${API_BASE}/community/share`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers,
             body: JSON.stringify(payload),
         });
         if (!res.ok) {
-            const txt = await res.text();
-            console.error("community/share error:", txt);
-            alert("Failed to share to community.");
+            const text = await res.text();
+            console.error("community/share error:", res.status, text);
+            alert("Failed to share post.");
             return;
         }
-        $("communityMessageInput").value = "";
-        await loadCommunityFeed();
+        msgBox.value = "";
+        loadCommunityFeed();
     } catch (err) {
-        console.error(err);
-        alert("Error talking to community backend.");
-        feedEl.innerHTML = `<p class="placeholder-text">Error posting to community.</p>`;
+        console.error("shareToCommunity failed:", err);
+        alert("Failed to share post (network error).");
     }
 }
 
 async function loadCommunityFeed() {
-    const feedEl = $("communityFeed");
-    feedEl.innerHTML = `<p class="placeholder-text">Loading community feed…</p>`;
+    const container = $("communityFeed");
+    if (!container) return;
+    container.innerHTML = `<p class="placeholder-text">Loading community feed…</p>`;
 
     try {
-        const res = await fetch(`${BACKEND_URL}/community/feed`);
+        const res = await fetch(`${API_BASE}/community/feed`);
         if (!res.ok) {
-            const txt = await res.text();
-            console.error("community/feed error:", txt);
-            feedEl.innerHTML = `<p class="placeholder-text">Failed to load feed.</p>`;
+            const text = await res.text();
+            console.error("community/feed error:", res.status, text);
+            container.innerHTML =
+                `<p class="placeholder-text">Failed to load community feed.</p>`;
             return;
         }
         const data = await res.json();
         const posts = data.posts || data || [];
-
         if (!posts.length) {
-            feedEl.innerHTML = `<p class="placeholder-text">No posts yet. Share your first passport!</p>`;
+            container.innerHTML =
+                `<p class="placeholder-text">No posts yet – be the first to share!</p>`;
             return;
         }
 
-        let html = "";
-        for (const p of posts) {
-            const name = p.display_name || "Anonymous";
-            const msg = p.message || "";
-            const created = p.created_at || "";
-            const total = p.passport?.total_artists ?? null;
-            const countryCounts = p.passport?.country_counts || {};
-            const regions = p.passport?.region_percentages || {};
-
-            let summary = "";
-            const distinct = Object.keys(countryCounts).length;
-            if (total != null) {
-                summary = `${total} artist(s) across ${distinct} countries.`;
-            } else {
-                summary = `${distinct} countries.`;
-            }
-
-            let favRegion = "";
-            let maxVal = 0;
-            for (const [region, value] of Object.entries(regions)) {
-                if (value > maxVal) {
-                    maxVal = value;
-                    favRegion = region;
-                }
-            }
-            if (favRegion) {
-                summary += ` Favorite region: ${favRegion}.`;
-            }
-
-            html += `
-              <div class="community-post">
-                <div class="community-post-header">
-                  <span class="community-name">${name}</span>
-                  <span class="community-time">${created}</span>
+        const html = posts
+            .map((p) => {
+                const name = p.display_name || "Anonymous traveler";
+                const when = p.created_at || "";
+                const summary = p.passport_summary || "";
+                const message = p.message || "";
+                return `
+                <div class="community-post">
+                    <div class="community-post-header">
+                        <span class="community-name">${name}</span>
+                        <span class="community-time">${when}</span>
+                    </div>
+                    <div class="community-passport-summary">
+                        <span class="badge-passport">Passport</span>
+                        <span class="community-country">${summary}</span>
+                    </div>
+                    <div class="community-message">${message}</div>
                 </div>
-                <div class="community-passport-summary">
-                  <span class="badge-passport">Passport</span> ${summary}
-                </div>
-                <div class="community-message">${msg}</div>
-              </div>
             `;
-        }
-        feedEl.innerHTML = html;
+            })
+            .join("");
+
+        container.innerHTML = html;
     } catch (err) {
-        console.error(err);
-        feedEl.innerHTML = `<p class="placeholder-text">Error loading community feed.</p>`;
+        console.error("loadCommunityFeed failed:", err);
+        container.innerHTML =
+            `<p class="placeholder-text">Failed to load community feed.</p>`;
     }
+}
+
+/* ------------- ACHIEVEMENTS ------------- */
+
+function computeAchievements(countryCount) {
+    const n = countryCount || 0;
+    const list = [];
+
+    if (n >= 1) {
+        list.push({
+            name: "First Stamp",
+            desc: "You’ve visited at least one country with your listening.",
+        });
+    }
+    if (n >= 5) {
+        list.push({
+            name: "Frequent Flyer",
+            desc: "Your tunes have crossed 5+ country borders.",
+        });
+    }
+    if (n >= 10) {
+        list.push({
+            name: "Globetrotter",
+            desc: "10 or more countries – your playlists need a passport of their own.",
+        });
+    }
+    if (n >= 15) {
+        list.push({
+            name: "Sonic Cartographer",
+            desc: "You’re mapping the whole world with music.",
+        });
+    }
+    if (n >= 20) {
+        list.push({
+            name: "Interstellar DJ",
+            desc: "Beyond borders – your listening goes everywhere.",
+        });
+    }
+
+    if (!list.length) {
+        list.push({
+            name: "Local Listener",
+            desc: "Start exploring artists from other countries to earn more stamps.",
+        });
+    }
+
+    return list;
+}
+
+function loadAchievements() {
+    const input = $("countryCountInput");
+    const box = $("achievementsList");
+    if (!input || !box) return;
+
+    const value = parseInt(input.value, 10);
+    const n = Number.isFinite(value) && value >= 0 ? value : 0;
+
+    const stamps = computeAchievements(n);
+    const html = stamps
+        .map(
+            (s) => `
+        <div class="achievement-item">
+            <strong>${s.name}</strong><br />
+            <span>${s.desc}</span>
+        </div>
+    `
+        )
+        .join("");
+
+    box.innerHTML = html;
 }
