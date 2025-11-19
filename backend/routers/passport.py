@@ -34,98 +34,23 @@ router = APIRouter(prefix="/passport", tags=["Music Passport"])
 # Toggle MusicBrainz lookups via env
 USE_MB = os.getenv("PASSPORT_USE_MB", "0") == "1"
 
-# Map of country label -> region
-# Supports both full names and 2-letter codes where possible.
-COUNTRY_TO_REGION: Dict[str, str] = {
-    # North America (names)
-    "United States": "North America",
-    "Canada": "North America",
-    "Mexico": "North America",
-    # North America (codes)
-    "US": "North America",
-    "CA": "North America",
-    "MX": "North America",
-
-    # Europe (names)
-    "United Kingdom": "Europe",
-    "Ireland": "Europe",
-    "Germany": "Europe",
-    "France": "Europe",
-    "Spain": "Europe",
-    "Italy": "Europe",
-    "Netherlands": "Europe",
-    "Sweden": "Europe",
-    "Norway": "Europe",
-    "Finland": "Europe",
-    "Denmark": "Europe",
-    "Poland": "Europe",
-    "Portugal": "Europe",
-    "Russia": "Europe",
-    # Europe (codes)
-    "GB": "Europe",
-    "IE": "Europe",
-    "DE": "Europe",
-    "FR": "Europe",
-    "ES": "Europe",
-    "IT": "Europe",
-    "NL": "Europe",
-    "SE": "Europe",
-    "NO": "Europe",
-    "FI": "Europe",
-    "DK": "Europe",
-    "PL": "Europe",
-    "PT": "Europe",
-    "RU": "Europe",
-
-    # Asia (names)
-    "Japan": "Asia",
-    "South Korea": "Asia",
-    "China": "Asia",
-    "India": "Asia",
-    # Asia (codes)
-    "JP": "Asia",
-    "KR": "Asia",
-    "CN": "Asia",
-    "IN": "Asia",
-
-    # Oceania
-    "Australia": "Oceania",
-    "New Zealand": "Oceania",
-    "AU": "Oceania",
-    "NZ": "Oceania",
-
-    # South America
-    "Brazil": "South America",
-    "Argentina": "South America",
-    "Chile": "South America",
-    "Colombia": "South America",
-    "BR": "South America",
-    "AR": "South America",
-    "CL": "South America",
-    "CO": "South America",
-
-    # Africa
-    "South Africa": "Africa",
-    "Nigeria": "Africa",
-    "Egypt": "Africa",
-    "ZA": "Africa",
-    "NG": "Africa",
-    "EG": "Africa",
-}
-
-# Some MusicBrainz "area" names are cities like "Ottawa", "Montréal".
-# Map a few obvious ones back to countries so the passport looks sane.
-CITY_TO_COUNTRY: Dict[str, str] = {
-    "Ottawa": "CA",
-    "Montréal": "CA",
-    "Montreal": "CA",
-    "Toronto": "CA",
-    "Vancouver": "CA",
-    "New York": "US",
-    "Los Angeles": "US",
-    "London": "GB",
-    "Paris": "FR",
-    "Tokyo": "JP",
+COUNTRY_TO_REGION = {
+    "United States": "North America", "Canada": "North America", "Mexico": "North America",
+    "United Kingdom": "Europe", "Ireland": "Europe", "Germany": "Europe", "France": "Europe",
+    "Spain": "Europe", "Italy": "Europe", "Netherlands": "Europe", "Sweden": "Europe",
+    "Norway": "Europe", "Finland": "Europe", "Denmark": "Europe", "Poland": "Europe",
+    "Portugal": "Europe", "Russia": "Europe",
+    "Japan": "Asia", "South Korea": "Asia", "China": "Asia", "India": "Asia",
+    "Australia": "Oceania", "New Zealand": "Oceania",
+    "Brazil": "South America", "Argentina": "South America", "Chile": "South America", "Colombia": "South America",
+    "South Africa": "Africa", "Nigeria": "Africa", "Egypt": "Africa",
+    # common 2-letter codes
+    "US": "North America", "CA": "North America", "GB": "Europe", "FR": "Europe",
+    "DE": "Europe", "ES": "Europe", "IT": "Europe", "SE": "Europe",
+    "JP": "Asia", "KR": "Asia", "CN": "Asia", "IN": "Asia",
+    "AU": "Oceania", "NZ": "Oceania",
+    "BR": "South America", "AR": "South America", "CL": "South America", "CO": "South America",
+    "ZA": "Africa", "NG": "Africa", "EG": "Africa",
 }
 
 def region_of(country: Optional[str]) -> Optional[str]:
@@ -139,65 +64,29 @@ def rollup_regions(country_counts: Dict[str, int]) -> Dict[str, float]:
         return {}
     reg_counts: Dict[str, int] = {}
     for country, cnt in country_counts.items():
-        reg = region_of(country)
-        if not reg:
-            reg = "Unknown"
+        reg = region_of(country) or "Unknown"
         reg_counts[reg] = reg_counts.get(reg, 0) + cnt
     return {reg: cnt / total for reg, cnt in reg_counts.items()}
 
-# Quick hardcoded seeds for some very popular artists
 QUICK_COUNTRY_SEEDS: Dict[str, str] = {
-    "Taylor Swift": "US",
-    "Drake": "CA",
-    "Bad Bunny": "PR",  # Puerto Rico
-    "Adele": "GB",
-    "BTS": "KR",
-    "BLACKPINK": "KR",
-    "Daft Punk": "FR",
-    "Arctic Monkeys": "GB",
-    "The Beatles": "GB",
-    "Kendrick Lamar": "US",
-    "YOASOBI": "JP",
-    "IU": "KR",
-    "Rammstein": "DE",
+    "Taylor Swift": "United States",
+    "Drake": "Canada",
+    "Bad Bunny": "Puerto Rico",
+    "Adele": "United Kingdom",
+    "BTS": "South Korea",
+    "BLACKPINK": "South Korea",
+    "Daft Punk": "France",
+    "Arctic Monkeys": "United Kingdom",
+    "The Beatles": "United Kingdom",
+    "Kendrick Lamar": "United States",
+    "YOASOBI": "Japan",
+    "IU": "South Korea",
+    "Rammstein": "Germany",
 }
 
 MB_COUNTRY_CACHE: Dict[str, Optional[str]] = {}
 
-def normalize_country_label(raw: Optional[str]) -> str:
-    """
-    Normalize various forms of "country-ish" data:
-    - City names (Ottawa, Montréal) -> mapped to a country code when possible
-    - 2-letter codes -> uppercased and kept if recognized
-    - Known country names -> kept
-    Otherwise -> "Unknown"
-    """
-    if not raw:
-        return "Unknown"
-
-    label = raw.strip()
-
-    # Map well-known cities -> country codes
-    if label in CITY_TO_COUNTRY:
-        label = CITY_TO_COUNTRY[label]
-
-    # Uppercase 2-letter codes
-    if len(label) == 2:
-        label = label.upper()
-
-    # If we recognize it as a key in COUNTRY_TO_REGION, keep it
-    if label in COUNTRY_TO_REGION:
-        return label
-
-    # If it's a full name that we know (e.g., "Poland") we already handled it above.
-    # Everything else is Unknown for now.
-    return "Unknown"
-
 def mb_lookup_country(artist_name: str) -> Optional[str]:
-    """
-    Ask MusicBrainz for the artist and try to get some notion of country.
-    Returns the RAW label (code or name); we normalize later.
-    """
     if not USE_MB:
         return None
     if artist_name in MB_COUNTRY_CACHE:
@@ -211,11 +100,9 @@ def mb_lookup_country(artist_name: str) -> Optional[str]:
         data = r.json()
         if data.get("artists"):
             a = data["artists"][0]
-            # Prefer MusicBrainz "country" field (usually a 2-letter code)
             if "country" in a:
                 MB_COUNTRY_CACHE[artist_name] = a["country"]
                 return a["country"]
-            # Otherwise try area / begin-area names
             for key in ("area", "begin-area"):
                 if isinstance(a.get(key), dict):
                     nm = a[key].get("name")
@@ -228,17 +115,10 @@ def mb_lookup_country(artist_name: str) -> Optional[str]:
     return None
 
 def infer_country_fast(artist_name: str) -> str:
-    """
-    Try to infer a normalized country label for this artist.
-    """
     if artist_name in QUICK_COUNTRY_SEEDS:
-        return normalize_country_label(QUICK_COUNTRY_SEEDS[artist_name])
-
+        return QUICK_COUNTRY_SEEDS[artist_name]
     c = mb_lookup_country(artist_name)
-    if c:
-        return normalize_country_label(c)
-
-    return "Unknown"
+    return c or "Unknown"
 
 def spotify_get(path: str, access_token: str, params: Optional[Dict] = None):
     """
@@ -270,12 +150,14 @@ def passport_from_token(
     limit: int = Query(8, ge=1, le=20),
 ):
     """
-    Build a passport snapshot from the user's top artists.
+    Build a live passport snapshot from Spotify top artists.
+
     Returns:
-    - country_counts: {country_label -> count}
-    - region_percentages: {region -> fraction}
-    - total_artists
-    - artists_by_country: {country_label -> [artist_name, ...]}
+    - country_counts: {country -> artist count}
+    - region_percentages: {region -> fraction of artists}
+    - total_artists: total number of artists considered
+    - artists_by_country: {country -> [artist names]}
+    - top_artists: [artist names, ordered as Spotify returns them]
     """
     top = spotify_get("/me/top/artists", access_token, params={"limit": limit})
     if not isinstance(top, dict) or "items" not in top:
@@ -284,21 +166,30 @@ def passport_from_token(
     country_counts: Dict[str, int] = {}
     artists_by_country: Dict[str, List[str]] = {}
     total_artists = 0
+    top_artists: List[str] = []
 
     for artist in top["items"]:
-        name = (artist or {}).get("name")
+        if not isinstance(artist, dict):
+            continue
+        name = artist.get("name")
         if not name:
             continue
+
+        # track ordered list of top artists
+        if name not in top_artists:
+            top_artists.append(name)
+
         total_artists += 1
         country = infer_country_fast(name)
         country_counts[country] = country_counts.get(country, 0) + 1
-        artists_by_country.setdefault(country, []).append(name)
 
-    # Deduplicate artist lists per country and sort for nicer display
-    for c, names in artists_by_country.items():
-        artists_by_country[c] = sorted(sorted(set(names)), key=str.lower)
+        if country not in artists_by_country:
+            artists_by_country[country] = []
+        if name not in artists_by_country[country]:
+            artists_by_country[country].append(name)
 
     region_percentages = rollup_regions(country_counts)
+
     return {
         "id": "from_token_snapshot",
         "user_id": "from_token",
@@ -307,7 +198,8 @@ def passport_from_token(
         "region_percentages": region_percentages,
         "total_artists": total_artists,
         "artists_by_country": artists_by_country,
-        "note": "Fast inference; limited for speed.",
+        "top_artists": top_artists,
+        "note": "Fast inference; countries/regions are approximate.",
     }
 
 @router.get("/from_token_recent")
@@ -315,17 +207,13 @@ def passport_from_token_recent(
     access_token: str = Query(..., description="Spotify access token"),
     limit: int = Query(20, ge=1, le=50),
 ):
-    """
-    Build a passport snapshot from recently played tracks (deduped by artist).
-    """
     recent = spotify_get("/me/player/recently-played", access_token, params={"limit": limit})
-    if "error" in recent:
+    items = recent.get("items", []) if isinstance(recent, dict) else []
+    if isinstance(recent, dict) and "error" in recent:
         raise HTTPException(status_code=400, detail=f"Could not fetch recently played: {recent}")
 
-    items = recent.get("items", []) if isinstance(recent, dict) else []
     names: List[str] = []
     seen = set()
-
     for it in items:
         track = (it or {}).get("track") or {}
         for a in track.get("artists") or []:
@@ -334,19 +222,12 @@ def passport_from_token_recent(
                 seen.add(nm)
                 names.append(nm)
 
-    # Limit how many artists we bother to look up
     names = names[:12]
 
     country_counts: Dict[str, int] = {}
-    artists_by_country: Dict[str, List[str]] = {}
-
     for nm in names:
         country = infer_country_fast(nm)
         country_counts[country] = country_counts.get(country, 0) + 1
-        artists_by_country.setdefault(country, []).append(nm)
-
-    for c, arr in artists_by_country.items():
-        artists_by_country[c] = sorted(sorted(set(arr)), key=str.lower)
 
     region_percentages = rollup_regions(country_counts)
     return {
@@ -356,7 +237,6 @@ def passport_from_token_recent(
         "country_counts": country_counts,
         "region_percentages": region_percentages,
         "total_artists": len(names),
-        "artists_by_country": artists_by_country,
         "note": "Built from recently played; fast inference.",
     }
 
@@ -385,13 +265,13 @@ def get_passport(user_id: str, db: Session = Depends(get_db)):
 
     country_counts: Dict[str, int] = {}
     for a in artists:
-        # DB already has origin_country; normalize it a bit just in case
-        c = normalize_country_label(a.origin_country or "Unknown")
+        c = a.origin_country or "Unknown"
         country_counts[c] = country_counts.get(c, 0) + 1
 
     total = len(artists)
     region_percentages = rollup_regions(country_counts)
     passport = crud.create_passport(db, user_id, country_counts, region_percentages, total)
     return passport
+
 
 
