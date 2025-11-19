@@ -47,21 +47,22 @@ body {
 /* -------- HEADER -------- */
 .app-header {
     text-align: center;
-    padding: 48px 8px 8px; /* bring title down from top */
+    padding: 16px 8px 8px; /* normal top padding */
 }
 
+/* this is the Tuniverse title image */
 .app-title-img {
     max-width: 320px;
     width: 60%;
     height: auto;
-    margin-top: 0; /* remove extra gap above logo */
+    margin: 40px auto 2px;  /* <<< push it DOWN and sit just above intro text */
     filter:
         drop-shadow(0 0 12px rgba(0, 0, 0, 0.8))
         drop-shadow(0 0 16px rgba(245, 245, 120, 0.7));
 }
 
 .app-subtitle {
-    margin: 4px auto 0; /* tighter spacing so logo sits just above intro */
+    margin: 4px auto 0; /* small gap below logo = "one line" look */
     max-width: 640px;
     font-size: 0.98rem;
     color: #fcefb1;
@@ -526,13 +527,6 @@ body {
     font-weight: 600;
 }
 
-/* -------- GENRE LEGEND -------- */
-/* (left here unused – no badges in layout now)
-.genre-legend { ... }
-.genre-badge { ... }
-.genre-icon { ... }
-*/
-
 /* -------- RESPONSIVE -------- */
 @media (max-width: 1024px) {
     .layout-grid {
@@ -547,4 +541,3 @@ body {
         width: 110px;
     }
 }
-
