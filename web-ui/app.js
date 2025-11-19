@@ -474,8 +474,6 @@ function updatePassportStats(data) {
             favRegion = region;
         }
     }
-
-    // If we literally have no non-Unknown regions, keep "Unknown"
     favRegionEl.textContent = favRegion;
 
     const iconPath = REGION_ICON_MAP[favRegion] || null;
@@ -488,9 +486,9 @@ function updatePassportStats(data) {
     }
 }
 
-/* Artists by Region panel (formerly Artists by Country) */
+/* Artists by Region panel (reuse artistsByCountryList container) */
 function updateArtistsByRegion(data) {
-    const box = $("artistsByCountryList"); // reuse same DOM id for simplicity
+    const box = $("artistsByCountryList");
     if (!box) return;
 
     const countryCounts = data.country_counts || {};
@@ -574,114 +572,3 @@ async function loadCommunityFeed() {
         const res = await fetch(`${API_BASE}/community/feed`);
         if (!res.ok) {
             const text = await res.text();
-            console.error("community/feed error:", res.status, text);
-            container.innerHTML =
-                `<p class="placeholder-text">Failed to load community feed.</p>`;
-            return;
-        }
-        const data = await res.json();
-        const posts = data.posts || data || [];
-        if (!posts.length) {
-            container.innerHTML =
-                `<p class="placeholder-text">No posts yet – be the first to share!</p>`;
-            return;
-        }
-
-        const html = posts
-            .map((p) => {
-                const name = p.display_name || "Anonymous traveler";
-                const when = p.created_at || "";
-                const summary = p.passport_summary || "";
-                const message = p.message || "";
-                return `
-                <div class="community-post">
-                    <div class="community-post-header">
-                        <span class="community-name">${name}</span>
-                        <span class="community-time">${when}</span>
-                    </div>
-                    <div class="community-passport-summary">
-                        <span class="badge-passport">Passport</span>
-                        <span class="community-country">${summary}</span>
-                    </div>
-                    <div class="community-message">${message}</div>
-                </div>
-            `;
-            })
-            .join("");
-
-        container.innerHTML = html;
-    } catch (err) {
-        console.error("loadCommunityFeed failed:", err);
-        container.innerHTML =
-            `<p class="placeholder-text">Failed to load community feed.</p>`;
-    }
-}
-
-/* ------------ Achievements ------------ */
-function computeAchievements(countryCount) {
-    const n = countryCount || 0;
-    const list = [];
-
-    if (n >= 1) {
-        list.push({
-            name: "First Stamp",
-            desc: "You’ve visited at least one country with your listening.",
-        });
-    }
-    if (n >= 5) {
-        list.push({
-            name: "Frequent Flyer",
-            desc: "Your tunes have crossed 5+ country borders.",
-        });
-    }
-    if (n >= 10) {
-        list.push({
-            name: "Globetrotter",
-            desc: "10 or more countries – your playlists need a passport of their own.",
-        });
-    }
-    if (n >= 15) {
-        list.push({
-            name: "Sonic Cartographer",
-            desc: "You’re mapping the whole world with music.",
-        });
-    }
-    if (n >= 20) {
-        list.push({
-            name: "Interstellar DJ",
-            desc: "Beyond borders – your listening goes everywhere.",
-        });
-    }
-
-    if (!list.length) {
-        list.push({
-            name: "Local Listener",
-            desc: "Start exploring artists from other countries to earn more stamps.",
-        });
-    }
-
-    return list;
-}
-
-function loadAchievements() {
-    const input = $("countryCountInput");
-    const box = $("achievementsList");
-    if (!input || !box) return;
-
-    const value = parseInt(input.value, 10);
-    const n = Number.isFinite(value) && value >= 0 ? value : 0;
-
-    const stamps = computeAchievements(n);
-    const html = stamps
-        .map(
-            (s) => `
-        <div class="achievement-item">
-            <strong>${s.name}</strong><br />
-            <span>${s.desc}</span>
-        </div>
-    `
-        )
-        .join("");
-
-    box.innerHTML = html;
-}
