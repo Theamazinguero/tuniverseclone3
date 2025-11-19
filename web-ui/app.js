@@ -486,33 +486,59 @@ function updatePassportStats(data) {
     }
 }
 
-/* Artists by Region panel (reuse artistsByCountryList container) */
+/* Artists by Region panel */
 function updateArtistsByRegion(data) {
     const box = $("artistsByCountryList");
     if (!box) return;
 
     const countryCounts = data.country_counts || {};
-    const entries = Object.entries(countryCounts);
-    if (!entries.length) {
+    const { regionCounts, totalArtists } = buildRegionCounts(countryCounts);
+    const regionEntries = Object.entries(regionCounts).filter(
+        ([region]) => region !== "Unknown"
+    );
+    const unknownCount = regionCounts["Unknown"] || 0;
+
+    if ((!regionEntries.length && !unknownCount) || totalArtists === 0) {
         box.innerHTML =
             `<p class="placeholder-text">No region data yet – load your passport first.</p>`;
         return;
     }
 
-    const html = entries
-        .map(
-            ([country, count]) => `
-        <div class="artists-country-group">
-            <div class="artists-country-title">${country}</div>
-            <ul class="artists-country-list">
-                <li>${count} artist(s) detected from this country.</li>
-            </ul>
-        </div>
-    `
-        )
-        .join("");
+    const chunks = [];
 
-    box.innerHTML = html;
+    for (const [region, count] of regionEntries) {
+        const pct = totalArtists ? ((count / totalArtists) * 100).toFixed(1) : "0.0";
+        const iconPath = REGION_ICON_MAP[region] || null;
+        const iconHtml = iconPath
+            ? `<img src="${iconPath}" alt="${region}" class="region-icon-inline" />`
+            : "";
+        chunks.push(`
+            <div class="artists-country-group">
+                <div class="artists-country-title">
+                    ${iconHtml}<span class="region-name">${region}</span>
+                </div>
+                <ul class="artists-country-list">
+                    <li>${count} artist(s) – ${pct}% of your passport</li>
+                </ul>
+            </div>
+        `);
+    }
+
+    if (unknownCount) {
+        const pct = totalArtists ? ((unknownCount / totalArtists) * 100).toFixed(1) : "0.0";
+        chunks.push(`
+            <div class="artists-country-group">
+                <div class="artists-country-title">
+                    <span class="region-name">Unknown</span>
+                </div>
+                <ul class="artists-country-list">
+                    <li>${unknownCount} artist(s) – ${pct}% of your passport</li>
+                </ul>
+            </div>
+        `);
+    }
+
+    box.innerHTML = chunks.join("");
 }
 
 /* ------------ Community ------------ */
@@ -683,4 +709,3 @@ function loadAchievements() {
 
     box.innerHTML = html;
 }
-
