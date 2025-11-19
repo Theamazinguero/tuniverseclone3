@@ -1,4 +1,4 @@
-/* BASIC RESET */
+/* ===== BASIC RESET ===== */
 *,
 *::before,
 *::after {
@@ -12,176 +12,115 @@ body {
   height: 100%;
 }
 
+/* ===== PAGE BASE ===== */
 body {
+  margin: 0;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
-  background: radial-gradient(circle at top, #151a3b 0, #050814 38%, #02030a 100%);
-  color: #f4f6ff;
-}
+  background: radial-gradient(circle at top, #181c3c 0, #050816 40%, #02030a 100%);
+  color: #f5f7ff;
 
-/* ROOT LAYOUT */
-.page-root {
-  min-height: 100vh;
-  padding: 1.5rem;
-}
-
-/* HERO: TITLE + LOGO (replacing planet with pings) */
-.tuniverse-hero {
-  max-width: 960px;
-  margin: 0 auto 2rem auto;
+  /* Center main content horizontally */
   display: flex;
-  flex-wrap: wrap;
+  justify-content: flex-start;
   align-items: center;
-  justify-content: space-between;
-  gap: 1.5rem;
 }
 
-.hero-text {
-  flex: 1 1 260px;
+/* Whatever your top-level wrapper is, this will at least catch body children */
+body > * {
+  width: 100%;
+  max-width: 960px;   /* keeps everything in a nice centered column */
+  margin: 1.5rem auto;
+  padding: 0 1rem;
 }
 
-.app-title {
-  font-size: 2.4rem;
+/* If you have a main tag, make it a vertical stack */
+main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+/* ===== GENERIC SECTION / CARD LOOK ===== */
+/* These apply to your existing sections without needing class names */
+
+section {
+  background: rgba(7, 10, 30, 0.9);
+  border-radius: 16px;
+  padding: 1.25rem 1.35rem;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Headings */
+h1,
+h2,
+h3 {
+  margin-bottom: 0.5rem;
+}
+
+h1 {
+  font-size: 2.1rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  margin-bottom: 0.4rem;
 }
 
-.app-tagline {
-  font-size: 0.98rem;
-  opacity: 0.8;
-  max-width: 26rem;
-  line-height: 1.4;
-  margin-bottom: 0.75rem;
-}
-
-.backend-label {
-  font-size: 0.88rem;
-  opacity: 0.9;
-}
-
-.backend-label span {
-  font-family: "JetBrains Mono", Consolas, "Courier New", monospace;
-  font-size: 0.86rem;
-}
-
-/* Logo area where planet + pings used to be */
-.hero-visual {
-  flex: 0 0 260px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.tuniverse-logo {
-  max-width: 260px;
-  width: 100%;
-  height: auto;
-  display: block;
-  filter: drop-shadow(0 0 30px rgba(0, 0, 0, 0.8));
-}
-
-/* MAIN CENTERED COLUMN */
-.tuniverse-main {
-  min-height: 0;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 0 0.5rem 2.5rem 0.5rem;
-}
-
-.tuniverse-sections {
-  width: 100%;
-  max-width: 960px;
-  display: flex;
-  flex-direction: column;
-  gap: 1.4rem;
-  margin: 0 auto;
-}
-
-/* CARDS / SECTIONS */
-.tuniverse-card {
-  background: rgba(8, 10, 30, 0.9);
-  border-radius: 18px;
-  padding: 1.4rem 1.5rem;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.52);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(12px);
-}
-
-.tuniverse-card h2 {
+h2 {
   font-size: 1.25rem;
-  margin-bottom: 0.5rem;
 }
 
-.tuniverse-card h3 {
+h3 {
   font-size: 1rem;
-  margin-top: 1rem;
-  margin-bottom: 0.4rem;
 }
 
-/* TEXT / LABELS */
-.signed-in-text {
-  font-size: 0.9rem;
-  margin-top: 0.6rem;
-  margin-bottom: 0.5rem;
-}
-
-.section-note {
-  font-size: 0.9rem;
-  margin-bottom: 0.6rem;
-  opacity: 0.86;
-}
-
-/* FIELDS */
-.field-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  margin-top: 0.6rem;
-}
-
-.field-group label {
+/* Make labels / small text clearer */
+label {
   font-size: 0.85rem;
   opacity: 0.9;
 }
 
+/* ===== FORM ELEMENTS ===== */
+
 input[type="text"],
 textarea {
-  background: rgba(10, 14, 40, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  width: 100%;
+  background: rgba(10, 14, 40, 0.98);
   border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
   padding: 0.55rem 0.7rem;
-  color: #f4f6ff;
+  color: #f5f7ff;
   font-size: 0.9rem;
   resize: vertical;
   outline: none;
+  margin-top: 0.15rem;
+  margin-bottom: 0.5rem;
 }
 
 input[type="text"]:focus,
 textarea:focus {
-  border-color: #68b3ff;
-  box-shadow: 0 0 0 1px rgba(104, 179, 255, 0.5);
+  border-color: #66b3ff;
+  box-shadow: 0 0 0 1px rgba(102, 179, 255, 0.45);
 }
 
-/* BUTTONS */
-.button-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.7rem;
+/* Group controls */
+.field-group {
+  margin-top: 0.5rem;
 }
+
+/* ===== BUTTONS ===== */
 
 button {
   border: none;
   border-radius: 999px;
-  padding: 0.5rem 1.15rem;
+  padding: 0.5rem 1.1rem;
   font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
-  background: linear-gradient(135deg, #4c7fff, #9a5bff);
   color: #ffffff;
-  transition: transform 0.08s ease, box-shadow 0.08s ease, opacity 0.12s ease;
+  background: linear-gradient(135deg, #4f80ff, #9b5aff);
+  transition: transform 0.08s ease, box-shadow 0.08s ease, opacity 0.1s ease;
+  margin-right: 0.4rem;
+  margin-top: 0.4rem;
 }
 
 button.secondary {
@@ -199,63 +138,105 @@ button:active {
   opacity: 0.9;
 }
 
-/* PASSPORT LAYOUT */
-.passport-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 0.8rem;
-  margin-top: 0.8rem;
+/* Button rows, if you have wrappers */
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
 }
 
-.passport-column h3 {
-  margin-bottom: 0.3rem;
-}
+/* ===== INFO / FEED BOXES ===== */
 
-/* INFO BOXES */
-.info-box {
-  background: rgba(5, 8, 24, 0.95);
+.info-box,
+#passport-summary,
+#passport-regions,
+#artists-by-country,
+#community-feed {
+  background: rgba(5, 8, 24, 0.96);
   border-radius: 12px;
-  padding: 0.7rem 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.7rem 0.8rem;
   font-size: 0.9rem;
-  min-height: 2.2rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
   overflow-wrap: anywhere;
 }
 
-.feed-box {
+/* Scrollable feed */
+#community-feed {
   max-height: 260px;
   overflow-y: auto;
 }
 
-/* SCROLLBAR TWEAK (WEBKIT) */
-.feed-box::-webkit-scrollbar {
+/* Scrollbar tweak (if supported) */
+#community-feed::-webkit-scrollbar {
   width: 6px;
 }
 
-.feed-box::-webkit-scrollbar-track {
+#community-feed::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.feed-box::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.14);
+#community-feed::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 999px;
 }
 
-/* RESPONSIVE */
+/* ===== HERO LOGO (REPLACES PLANET) ===== */
+/* Use this on the element that used to hold the planet with pings */
+
+#hero-logo,
+#planet-with-pings,
+.planet-wrapper {
+  /* Any one of these matching your old container will pick this up */
+  width: 260px;
+  height: 260px;
+  margin: 1.5rem auto;
+  background-image: url("assets/tuniverse-logo.png"); /* adjust path if needed */
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  filter: drop-shadow(0 0 28px rgba(0, 0, 0, 0.85));
+}
+
+/* If that container is inside a flex row, keep it centered */
+.hero-row,
+.header-row,
+.top-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* ===== PASSPORT TWO-COLUMN LAYOUT (WHEN POSSIBLE) ===== */
+
+.passport-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.8rem;
+}
+
+/* ===== SMALL / RESPONSIVE TWEAKS ===== */
+
 @media (max-width: 720px) {
-  .page-root {
-    padding: 1rem;
+  body > * {
+    margin: 1rem auto;
+    padding: 0 0.75rem;
   }
 
-  .tuniverse-hero {
-    margin-bottom: 1.4rem;
+  h1 {
+    font-size: 1.8rem;
   }
 
-  .app-title {
-    font-size: 2rem;
+  section {
+    padding: 1rem 1rem;
   }
 
-  .tuniverse-card {
-    padding: 1.1rem 1.1rem;
+  #hero-logo,
+  #planet-with-pings,
+  .planet-wrapper {
+    width: 200px;
+    height: 200px;
   }
 }
+
+
