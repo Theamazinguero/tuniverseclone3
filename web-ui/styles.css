@@ -47,21 +47,21 @@ body {
 /* -------- HEADER -------- */
 .app-header {
     text-align: center;
-    padding: 40px 8px 8px; /* move title block further down the page */
+    padding: 48px 8px 8px; /* bring title down from top */
 }
 
 .app-title-img {
     max-width: 320px;
     width: 60%;
     height: auto;
-    margin-top: 12px;
+    margin-top: 0; /* remove extra gap above logo */
     filter:
         drop-shadow(0 0 12px rgba(0, 0, 0, 0.8))
         drop-shadow(0 0 16px rgba(245, 245, 120, 0.7));
 }
 
 .app-subtitle {
-    margin: 10px auto 0;
+    margin: 4px auto 0; /* tighter spacing so logo sits just above intro */
     max-width: 640px;
     font-size: 0.98rem;
     color: #fcefb1;
@@ -353,77 +353,6 @@ body {
     gap: 6px;
 }
 
-/* -------- PASSPORT SNAPSHOT (COUNTRIES / REGIONS) -------- */
-
-.passport-summary {
-    margin-bottom: 6px;
-    font-size: 0.84rem;
-    color: #e5e7ff;
-}
-
-.passport-summary-main {
-    font-size: 0.86rem;
-}
-
-.passport-summary-number {
-    font-weight: 600;
-    color: #facc15;
-}
-
-.passport-columns {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 4px;
-}
-
-.passport-column {
-    flex: 1 1 0;
-    min-width: 150px;
-}
-
-.passport-column-title {
-    font-size: 0.78rem;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: #9ca3ff;
-    margin-bottom: 4px;
-}
-
-.passport-list {
-    list-style: none;
-    padding-left: 0;
-    margin: 0;
-}
-
-.passport-list li {
-    font-size: 0.8rem;
-    margin-bottom: 2px;
-    color: #cbd5ff;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-/* region lines (for "By Tuniverse region" with icons) */
-.region-line {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 0.8rem;
-}
-
-.region-icon-inline {
-    width: 18px;
-    height: 18px;
-    object-fit: contain;
-    filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.6));
-}
-
-.region-name {
-    font-weight: 600;
-}
-
 /* -------- COMMUNITY FEED -------- */
 .community-post {
     border-radius: 10px;
@@ -499,7 +428,7 @@ body {
     font-size: 0.78rem;
 }
 
-/* -------- ARTISTS BY REGION -------- */
+/* -------- ARTISTS / REGION VISUALS USED IN COMMUNITY POSTS -------- */
 .artists-country-group {
     border-radius: 10px;
     border: 1px solid rgba(148, 163, 255, 0.4);
@@ -525,6 +454,14 @@ body {
     color: #cbd5ff;
 }
 
+/* inline region icon used inside lists */
+.region-icon-inline {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.6));
+}
+
 /* -------- REGION ICONS -------- */
 .region-row {
     display: flex;
@@ -548,32 +485,53 @@ body {
     height: 24px;
 }
 
-/* -------- GENRE LEGEND -------- */
-.genre-legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 6px;
+/* -------- PASSPORT SUMMARY LAYOUT -------- */
+.passport-summary {
+    margin-bottom: 6px;
 }
 
-.genre-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 4px 8px;
-    border-radius: 999px;
-    border: 1px solid rgba(148, 163, 255, 0.55);
-    background: rgba(15, 23, 42, 0.9);
-    font-size: 0.78rem;
+.passport-summary-main {
+    font-size: 0.86rem;
     color: #e5e7ff;
 }
 
-.genre-icon {
-    width: 20px;
-    height: 20px;
-    object-fit: contain;
-    filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.75));
+.passport-summary-number {
+    font-weight: 600;
+    color: #fbbf24;
 }
+
+.passport-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 6px;
+}
+
+.passport-column-title {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #9ca3ff;
+    margin-bottom: 4px;
+}
+
+.passport-list {
+    margin: 0;
+    padding-left: 16px;
+    font-size: 0.78rem;
+    color: #cbd5ff;
+}
+
+.region-name {
+    font-weight: 600;
+}
+
+/* -------- GENRE LEGEND -------- */
+/* (left here unused – no badges in layout now)
+.genre-legend { ... }
+.genre-badge { ... }
+.genre-icon { ... }
+*/
 
 /* -------- RESPONSIVE -------- */
 @media (max-width: 1024px) {
@@ -588,10 +546,5 @@ body {
     .passport-logo-main {
         width: 110px;
     }
-
-    .passport-columns {
-        flex-direction: column;
-    }
 }
-
 
