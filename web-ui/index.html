@@ -7,124 +7,116 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="page-root">
-    <!-- HERO: Title + Logo (replaces planet with pings) -->
-    <header class="tuniverse-hero">
-      <div class="hero-text">
-        <h1 class="app-title">Tuniverse</h1>
-        <p class="app-tagline">
-          Explore your music passport, share your journey, and see your listening map unfold.
-        </p>
-        <p class="backend-label">
-          Backend: <span id="backend-display">http://127.0.0.1:8000</span>
-        </p>
-      </div>
+  <div id="app">
+    <!-- Top hero row: title + optional logo area (where planet-with-pings used to be) -->
+    <header>
+      <div class="hero-row">
+        <div class="hero-text">
+          <h1>Tuniverse</h1>
+          <p>
+            Explore your music passport, share your journey, and see how your listening
+            paints the world.
+          </p>
+          <p style="font-size: 0.85rem; opacity: 0.85;">
+            Backend:
+            <span id="backend-display">http://127.0.0.1:8000</span>
+          </p>
+        </div>
 
-      <div class="hero-visual">
-        <!-- Put your logo file at this path or adjust src -->
-        <img
-          src="assets/tuniverse-logo.png"
-          alt="Tuniverse Logo"
-          class="tuniverse-logo"
-        />
+        <!-- This div will show the logo via CSS (replaces “planet with pings”) -->
+        <div id="hero-logo"></div>
       </div>
     </header>
 
-    <!-- MAIN CENTERED COLUMN -->
-    <main class="tuniverse-main">
-      <section class="tuniverse-sections">
+    <main>
+      <!-- 1) CONNECT SPOTIFY -->
+      <section id="connect-spotify-section">
+        <h2>1) Connect Spotify</h2>
 
-        <!-- 1) CONNECT SPOTIFY -->
-        <section class="tuniverse-card" id="connect-spotify-section">
-          <h2>1) Connect Spotify</h2>
+        <div class="field-group">
+          <label for="backend-url">Backend URL</label>
+          <input
+            type="text"
+            id="backend-url"
+            value="http://127.0.0.1:8000"
+            autocomplete="off"
+          />
+        </div>
 
-          <div class="field-group">
-            <label for="backend-url">Backend URL</label>
-            <input
-              type="text"
-              id="backend-url"
-              value="http://127.0.0.1:8000"
-              autocomplete="off"
-            />
-          </div>
+        <div class="button-row">
+          <button id="login-button">Login with Spotify</button>
+          <button id="logout-button" class="secondary">Logout</button>
+        </div>
 
-          <div class="button-row">
-            <button id="login-button">Login with Spotify</button>
-            <button id="logout-button" class="secondary">Logout</button>
-          </div>
+        <p class="signed-in-text">
+          Signed in as: <span id="user-display">Not signed in</span>
+        </p>
 
-          <p class="signed-in-text">
-            Signed in as: <span id="user-display">Not signed in</span>
-          </p>
+        <div class="field-group">
+          <label for="access-token">Access Token (debug; filled after login)</label>
+          <textarea
+            id="access-token"
+            rows="3"
+            spellcheck="false"
+            placeholder="Token will appear here after login..."
+          ></textarea>
+        </div>
+      </section>
 
-          <div class="field-group">
-            <label for="access-token">Access Token (debug, auto-filled after login)</label>
-            <textarea
-              id="access-token"
-              rows="3"
-              spellcheck="false"
-              placeholder="Token will appear here after login..."
-            ></textarea>
-          </div>
-        </section>
+      <!-- 2) PASSPORT -->
+      <section id="passport-section">
+        <h2>2) Passport Snapshot</h2>
 
-        <!-- 2) PASSPORT -->
-        <section class="tuniverse-card" id="passport-section">
-          <h2>2) Passport Snapshot</h2>
+        <div class="button-row">
+          <button id="refresh-passport-button">Refresh Passport</button>
+        </div>
 
-          <div class="button-row">
-            <button id="refresh-passport-button">Refresh Passport</button>
-          </div>
-
-          <div class="passport-grid">
-            <div class="passport-column">
-              <h3>Summary</h3>
-              <div id="passport-summary" class="info-box">
-                Passport snapshot will appear here.
-              </div>
-            </div>
-
-            <div class="passport-column">
-              <h3>By Region</h3>
-              <div id="passport-regions" class="info-box">
-                Region breakdown will appear here.
-              </div>
+        <div class="passport-grid" style="margin-top: 0.7rem;">
+          <div class="passport-column">
+            <h3>Summary</h3>
+            <div id="passport-summary" class="info-box">
+              Passport snapshot will appear here.
             </div>
           </div>
 
-          <h3>Artists by Country</h3>
-          <div id="artists-by-country" class="info-box">
-            Artists grouped by country will appear here once wired up.
+          <div class="passport-column">
+            <h3>By Region</h3>
+            <div id="passport-regions" class="info-box">
+              Region breakdown will appear here.
+            </div>
           </div>
-        </section>
+        </div>
 
-        <!-- 3) COMMUNITY -->
-        <section class="tuniverse-card" id="community-section">
-          <h2>3) Community</h2>
+        <h3>Artists by Country</h3>
+        <div id="artists-by-country" class="info-box">
+          Artists grouped by country will appear here once wired up.
+        </div>
+      </section>
 
-          <p class="section-note">
-            Share a snapshot of your passport with the Tuniverse community.
-          </p>
+      <!-- 3) COMMUNITY -->
+      <section id="community-section">
+        <h2>3) Community</h2>
+        <p class="section-note">
+          Share a snapshot of your passport with the Tuniverse community.
+        </p>
 
-          <div class="field-group">
-            <label for="community-message">Message</label>
-            <textarea
-              id="community-message"
-              rows="3"
-              placeholder="Say something about your latest music journey..."
-            ></textarea>
-          </div>
+        <div class="field-group">
+          <label for="community-message">Message</label>
+          <textarea
+            id="community-message"
+            rows="3"
+            placeholder="Say something about your latest music journey..."
+          ></textarea>
+        </div>
 
-          <div class="button-row">
-            <button id="community-share-button">Share to Community</button>
-          </div>
+        <div class="button-row">
+          <button id="community-share-button">Share to Community</button>
+        </div>
 
-          <h3>Community Feed</h3>
-          <div id="community-feed" class="info-box feed-box">
-            Feed posts will appear here.
-          </div>
-        </section>
-
+        <h3>Community Feed</h3>
+        <div id="community-feed" class="info-box">
+          Feed posts will appear here.
+        </div>
       </section>
     </main>
   </div>
