@@ -10,7 +10,6 @@
     <div class="app-shell">
         <!-- HEADER -->
         <header class="app-header">
-            <!-- Tuniverse title image -->
             <img src="assets/tuniversetext.png" alt="Tuniverse" class="app-title-img" />
             <p class="app-subtitle">
                 Track your musical travels across the globe and share your passport with the world.
@@ -75,7 +74,7 @@
                     <div class="passport-header-text">
                         <h2 class="card-title">Music Passport</h2>
                         <p class="card-subtitle">
-                            See which countries your listening has visited.
+                            See which regions your listening has visited.
                         </p>
                     </div>
                 </div>
@@ -90,9 +89,12 @@
                         <span class="stat-label">Total Artists</span>
                         <span class="stat-value" id="statTotalArtists">0</span>
                     </div>
-                    <div class="stat-pill">
+                    <div class="stat-pill stat-pill-region">
                         <span class="stat-label">Favorite Region</span>
-                        <span class="stat-value" id="statFavRegion">—</span>
+                        <div class="stat-region-value">
+                            <img id="favRegionIcon" class="region-icon region-icon-large" alt="" />
+                            <span class="stat-value" id="statFavRegion">—</span>
+                        </div>
                     </div>
                 </div>
 
@@ -120,17 +122,16 @@
                     </div>
 
                     <div class="divider soft"></div>
-                    <!-- Region icons -->
+                    <!-- Tuniverse region legend -->
                     <ul class="region-row">
-                        <li>
-                            <img src="assets/caribbean.png" alt="Caribbean" class="region-icon" />
-                        </li>
-                        <li>
-                            <img src="assets/northamerica.png" alt="North America" class="region-icon" />
-                        </li>
-                        <li>
-                            <img src="assets/southamerica.png" alt="South America" class="region-icon" />
-                        </li>
+                        <li><img src="assets/northamerica.png" alt="North America" class="region-icon" /></li>
+                        <li><img src="assets/caribbean.png" alt="Caribbean" class="region-icon" /></li>
+                        <li><img src="assets/southamerica.png" alt="South America" class="region-icon" /></li>
+                        <li><img src="assets/middleeast.png" alt="Middle East" class="region-icon" /></li>
+                        <li><img src="assets/southasia.png" alt="South Asia" class="region-icon" /></li>
+                        <li><img src="assets/southeastasia.png" alt="Southeast Asia" class="region-icon" /></li>
+                        <li><img src="assets/eastasia.png" alt="East Asia" class="region-icon" /></li>
+                        <li><img src="assets/africa.png" alt="Africa" class="region-icon" /></li>
                     </ul>
                 </div>
             </section>
@@ -216,3 +217,5 @@
     <script src="app.js"></script>
 </body>
 </html>
+
+
