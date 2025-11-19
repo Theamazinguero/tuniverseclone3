@@ -1,105 +1,88 @@
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, HttpUrl
+# backend/routers/community.py
+
+from datetime import datetime, timezone
 from typing import List, Optional
-from datetime import datetime
-from uuid import uuid4
 
-router = APIRouter(prefix="/community", tags=["community"])
+from fastapi import APIRouter, Header
+from pydantic import BaseModel, Field
 
-
-# ---------- MODELS ----------
-
-class ShareRequest(BaseModel):
-    display_name: str
-    track_name: str
-    artist_name: str
-    album_name: Optional[str] = None
-    album_image_url: Optional[HttpUrl] = None
-    message: Optional[str] = None
+router = APIRouter(
+    prefix="/community",
+    tags=["community"],
+)
 
 
-class FeedItem(BaseModel):
-    id: str
-    display_name: str
-    track_name: str
-    artist_name: str
-    album_name: Optional[str]
-    album_image_url: Optional[HttpUrl]
-    message: Optional[str]
-    created_at: datetime
+class CommunityPostIn(BaseModel):
+    """
+    Incoming post from the web UI.
+    Matches the front-end payload in app.js:
+
+        {
+            display_name: string,
+            message: string,
+            passport_summary: string | null
+        }
+    """
+    display_name: str = Field(..., max_length=80)
+    message: str = Field(..., max_length=500)
+    passport_summary: Optional[str] = Field(None, max_length=500)
 
 
-class AchievementsRequest(BaseModel):
-    display_name: str
-    country_count: int
+class CommunityPostOut(CommunityPostIn):
+    """
+    What we return to the client and store in memory.
+    """
+    id: int
+    created_at: str
 
 
-class Achievement(BaseModel):
-    id: str
-    name: str
-    description: str
-    unlocked: bool
+# super simple in-memory store (fine for the class project)
+COMMUNITY_FEED: List[CommunityPostOut] = []
 
 
-# ---------- IN-MEMORY STORE ----------
+@router.post("/share", response_model=CommunityPostOut)
+async def share_post(
+    post: CommunityPostIn,
+    x_app_token: Optional[str] = Header(default=None, alias="X-App-Token"),
+):
+    """
+    Accept a post from the UI and stash it in memory.
+    X-App-Token is accepted but not enforced for now.
+    """
+    # normalize some values
+    display_name = (post.display_name or "").strip() or "Anonymous traveler"
+    message = (post.message or "").strip()
+    passport_summary = (post.passport_summary or "").strip() or None
 
-COMMUNITY_FEED: List[FeedItem] = []
-
-
-# ---------- COMMUNITY ROUTES ----------
-
-@router.post("/share", response_model=FeedItem)
-def share_to_community(payload: ShareRequest):
-    if not payload.track_name or not payload.artist_name:
-        raise HTTPException(status_code=400, detail="Missing track or artist")
-
-    post = FeedItem(
-        id=str(uuid4()),
-        display_name=payload.display_name.strip(),
-        track_name=payload.track_name.strip(),
-        artist_name=payload.artist_name.strip(),
-        album_name=payload.album_name.strip() if payload.album_name else None,
-        album_image_url=payload.album_image_url,
-        message=(payload.message or "").strip() or None,
-        created_at=datetime.utcnow(),
-    )
-
-    COMMUNITY_FEED.insert(0, post)
-    return post
-
-
-@router.get("/feed", response_model=List[FeedItem])
-def get_community_feed(limit: int = 50):
-    return COMMUNITY_FEED[:limit]
-
-
-# ---------- ACHIEVEMENTS ----------
-
-@router.post("/achievements", response_model=List[Achievement])
-def get_achievements(payload: AchievementsRequest):
-    display_name = payload.display_name.strip()
-    country_count = payload.country_count
-
-    # Count user posts
-    post_count = sum(1 for p in COMMUNITY_FEED if p.display_name == display_name)
-
-    achievements: List[Achievement] = []
-
-    def ach(id, name, desc, unlocked):
-        achievements.append(
-            Achievement(id=id, name=name, description=desc, unlocked=unlocked)
+    # basic guard: don’t allow empty message
+    if not message:
+        # Note: returning 200 with a short message instead of 422
+        # keeps the UI simpler for the demo.
+        return CommunityPostOut(
+            id=len(COMMUNITY_FEED) + 1,
+            display_name=display_name,
+            message="[empty message]",
+            passport_summary=passport_summary,
+            created_at=datetime.now(timezone.utc).isoformat(),
         )
 
-    # Country achievements
-    ach("first_country", "First Country", "Visit your first country.", country_count >= 1)
-    ach("traveler_5", "World Traveler I", "Visit 5 countries.", country_count >= 5)
-    ach("traveler_10", "World Traveler II", "Visit 10 countries.", country_count >= 10)
+    created_at = datetime.now(timezone.utc).isoformat()
+    new_post = CommunityPostOut(
+        id=len(COMMUNITY_FEED) + 1,
+        display_name=display_name,
+        message=message,
+        passport_summary=passport_summary,
+        created_at=created_at,
+    )
 
-    # Community achievements
-    ach("first_post", "Community Starter", "Make your first post.", post_count >= 1)
-    ach("five_posts", "Social Listener", "Make 5 posts.", post_count >= 5)
-
-    return achievements
+    # store newest first
+    COMMUNITY_FEED.insert(0, new_post)
+    return new_post
 
 
-
+@router.get("/feed", response_model=List[CommunityPostOut])
+async def get_feed():
+    """
+    Return the community feed, newest-first.
+    """
+    return COMMUNITY_FEED
