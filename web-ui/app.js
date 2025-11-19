@@ -214,7 +214,7 @@ function loginWithSpotify() {
     window.location.href = `${API_BASE}/auth/login`;
 }
 
-// keep these for potential debug use; no UI wired right now
+// keep these for possible debug, no UI wired right now
 function saveAccessToken() {
     const input = $("accessTokenInput");
     if (!input) return;
@@ -262,6 +262,449 @@ async function loadPlaylists() {
     }
     const container = $("playlistsList");
     if (!container) return;
-    container.innerHTML = `<p class="placeholder-text">Loading playlists
+    container.innerHTML = `<p class="placeholder-text">Loading playlists…</p>`;
 
+    const url = `${API_BASE}/spotify/playlists?access_token=${encodeURIComponent(token)}&limit=20`;
+    try {
+        const res = await fetch(url);
+        if (!res.ok) {
+            const text = await res.text();
+            console.error("spotify/playlists error:", res.status, text);
+            container.innerHTML = `<p class="placeholder-text">Failed to load playlists.</p>`;
+            return;
+        }
+        const data = await res.json();
+        const items = data.items || [];
+        if (!items.length) {
+            container.innerHTML = `<p class="placeholder-text">No playlists found.</p>`;
+            return;
+        }
+        const lines = items.map((pl) => {
+            const name = pl.name || "Untitled playlist";
+            const tracks = (pl.tracks && pl.tracks.total) || 0;
+            const owner = pl.owner && pl.owner.display_name ? pl.owner.display_name : "Unknown";
+            return `<p>${name} — ${tracks} tracks (by ${owner})</p>`;
+        });
+        container.innerHTML = lines.join("");
+    } catch (err) {
+        console.error("playlists failed:", err);
+        container.innerHTML = `<p class="placeholder-text">Failed to load playlists.</p>`;
+    }
+}
 
+/* ------------ Passport ------------ */
+
+function mapCountryToRegion(countryNameRaw) {
+    if (!countryNameRaw) return "Unknown";
+    const key = countryNameRaw.trim();
+
+    if (COUNTRY_TO_TUNIVERSE_REGION[key]) {
+        return COUNTRY_TO_TUNIVERSE_REGION[key];
+    }
+    const upper = key.toUpperCase();
+    if (COUNTRY_TO_TUNIVERSE_REGION[upper]) {
+        return COUNTRY_TO_TUNIVERSE_REGION[upper];
+    }
+    return "Unknown";
+}
+
+async function loadPassportCountries() {
+    const token = getAccessToken();
+    if (!token) {
+        alert("No Spotify access token yet.");
+        return;
+    }
+
+    const countriesBox = $("countriesList");
+    if (countriesBox) {
+        countriesBox.innerHTML = `<p class="placeholder-text">Loading passport snapshot…</p>`;
+    }
+
+    const passportUrl = `${API_BASE}/passport/from_token?access_token=${encodeURIComponent(token)}&limit=8`;
+    const topArtistsUrl = `${API_BASE}/spotify/top-artists?access_token=${encodeURIComponent(token)}&limit=1`;
+
+    try {
+        const [passportRes, topRes] = await Promise.all([
+            fetch(passportUrl),
+            fetch(topArtistsUrl),
+        ]);
+
+        // Handle passport snapshot
+        if (!passportRes.ok) {
+            const text = await passportRes.text();
+            console.error("passport/from_token error:", passportRes.status, text);
+            if (countriesBox) {
+                countriesBox.innerHTML =
+                    `<p class="placeholder-text">Failed to load passport countries.</p>`;
+            }
+        } else {
+            const passportData = await passportRes.json();
+            console.log("passport snapshot:", passportData);
+            renderPassportCountries(passportData);
+            updatePassportStats(passportData);
+            updateArtistsByRegion(passportData);
+        }
+
+        // Handle top artist
+        const statTop = $("statTopArtist");
+        if (topRes.ok) {
+            const topData = await topRes.json();
+            const items = topData.items || [];
+            const first = items[0];
+            const name = first && first.name ? first.name : null;
+            if (statTop) {
+                statTop.textContent = name || "No top artist data";
+            }
+        } else {
+            if (statTop) {
+                statTop.textContent = "No top artist data";
+            }
+        }
+    } catch (err) {
+        console.error("loadPassportCountries failed:", err);
+        if (countriesBox) {
+            countriesBox.innerHTML =
+                `<p class="placeholder-text">Failed to load passport countries.</p>`;
+        }
+    }
+}
+
+function buildRegionCounts(countryCounts) {
+    const regionCounts = {};
+    let totalArtists = 0;
+
+    for (const [country, count] of Object.entries(countryCounts)) {
+        const c = Number(count) || 0;
+        if (!c) continue;
+        totalArtists += c;
+        const region = mapCountryToRegion(country);
+        regionCounts[region] = (regionCounts[region] || 0) + c;
+    }
+    return { regionCounts, totalArtists };
+}
+
+function renderPassportCountries(data) {
+    const countriesBox = $("countriesList");
+    if (!countriesBox) return;
+
+    const countryCounts = data.country_counts || {};
+    const { regionCounts, totalArtists } = buildRegionCounts(countryCounts);
+    const numCountries = Object.keys(countryCounts).length;
+
+    if (numCountries === 0) {
+        countriesBox.innerHTML = `
+            <p class="placeholder-text">No countries inferred yet. Listen to more artists from around the world to fill your passport.</p>
+        `;
+        const countryCountInput = $("countryCountInput");
+        if (countryCountInput) {
+            countryCountInput.value = "0";
+        }
+        return;
+    }
+
+    // Sort countries and regions by count (descending)
+    const countryItems = Object.entries(countryCounts).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0));
+    const regionItems = Object.entries(regionCounts).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0));
+
+    const countryListHtml = countryItems
+        .map(([country, count]) => {
+            return `<li>${country}: ${count} artist(s)</li>`;
+        })
+        .join("");
+
+    const regionListHtml = regionItems
+        .map(([region, count]) => {
+            const pct = totalArtists ? ((count / totalArtists) * 100).toFixed(1) : "0.0";
+            const iconPath = REGION_ICON_MAP[region] || null;
+            const iconHtml = iconPath
+                ? `<img src="${iconPath}" alt="${region}" class="region-icon-inline" />`
+                : "";
+            return `
+                <li>
+                    ${iconHtml}
+                    <span class="region-name">${region}:</span>
+                    ${count} artist(s) – ${pct}%
+                </li>
+            `;
+        })
+        .join("");
+
+    countriesBox.innerHTML = `
+        <div class="passport-summary">
+            <div class="passport-summary-main">
+                <span class="passport-summary-number">${totalArtists}</span> artist${totalArtists === 1 ? "" : "s"}
+                across
+                <span class="passport-summary-number">${numCountries}</span>
+                countr${numCountries === 1 ? "y" : "ies"}.
+            </div>
+        </div>
+        <div class="passport-columns">
+            <div class="passport-column">
+                <div class="passport-column-title">By country</div>
+                <ul class="passport-list">
+                    ${countryListHtml}
+                </ul>
+            </div>
+            <div class="passport-column">
+                <div class="passport-column-title">By region</div>
+                <ul class="passport-list">
+                    ${regionListHtml}
+                </ul>
+            </div>
+        </div>
+    `;
+
+    // auto-fill #countries for achievements (based on distinct countries)
+    const countryCountInput = $("countryCountInput");
+    if (countryCountInput) {
+        countryCountInput.value = String(numCountries);
+    }
+}
+
+function updatePassportStats(data) {
+    const totalEl = $("statTotalArtists");
+    const favRegionEl = $("statFavRegion");
+    const favRegionIcon = $("favRegionIcon");
+
+    if (!totalEl || !favRegionEl || !favRegionIcon) return;
+
+    const countryCounts = data.country_counts || {};
+    const { regionCounts, totalArtists } = buildRegionCounts(countryCounts);
+
+    totalEl.textContent = totalArtists;
+
+    // pick favorite region from Tuniverse regionCounts (excluding Unknown)
+    let favRegion = "Unknown";
+    let bestCount = 0;
+    for (const [region, count] of Object.entries(regionCounts)) {
+        if (region === "Unknown") continue;
+        if (count > bestCount) {
+            bestCount = count;
+            favRegion = region;
+        }
+    }
+    favRegionEl.textContent = favRegion;
+
+    const iconPath = REGION_ICON_MAP[favRegion] || null;
+    if (iconPath) {
+        favRegionIcon.src = iconPath;
+        favRegionIcon.style.visibility = "visible";
+    } else {
+        favRegionIcon.src = "";
+        favRegionIcon.style.visibility = "hidden";
+    }
+}
+
+/* Artists by Region panel */
+function updateArtistsByRegion(data) {
+    const box = $("artistsByCountryList");
+    if (!box) return;
+
+    const countryCounts = data.country_counts || {};
+    const { regionCounts, totalArtists } = buildRegionCounts(countryCounts);
+    const regionEntries = Object.entries(regionCounts);
+
+    if (!regionEntries.length || totalArtists === 0) {
+        box.innerHTML =
+            `<p class="placeholder-text">No region data yet – load your passport first.</p>`;
+        return;
+    }
+
+    // sort regions by count desc, Unknown last
+    const sorted = regionEntries.sort((a, b) => {
+        if (a[0] === "Unknown") return 1;
+        if (b[0] === "Unknown") return -1;
+        return (b[1] ?? 0) - (a[1] ?? 0);
+    });
+
+    const chunks = [];
+
+    for (const [region, count] of sorted) {
+        const pct = totalArtists ? ((count / totalArtists) * 100).toFixed(1) : "0.0";
+        const iconPath = REGION_ICON_MAP[region] || null;
+        const iconHtml = iconPath
+            ? `<img src="${iconPath}" alt="${region}" class="region-icon-inline" />`
+            : "";
+        chunks.push(`
+            <div class="artists-country-group">
+                <div class="artists-country-title">
+                    ${iconHtml}<span class="region-name">${region}</span>
+                </div>
+                <ul class="artists-country-list">
+                    <li>${count} artist(s) – ${pct}% of your passport</li>
+                </ul>
+            </div>
+        `);
+    }
+
+    box.innerHTML = chunks.join("");
+}
+
+/* ------------ Community ------------ */
+async function shareToCommunity() {
+    const msgBox = $("communityMessageInput");
+    const regionBox = $("artistsByCountryList");  // <-- share Artists by Region
+    const displayName = $("displayNameInput") ? $("displayNameInput").value.trim() : "";
+    const appToken = getAppToken();
+
+    if (!msgBox || !regionBox) return;
+
+    const message = msgBox.value.trim();
+    if (!message) {
+        alert("Write something to share.");
+        return;
+    }
+
+    const summaryText = regionBox.textContent || "";
+
+    const payload = {
+        display_name: displayName || "Anonymous traveler",
+        message,
+        passport_summary: summaryText.slice(0, 500),
+    };
+
+    const headers = { "Content-Type": "application/json" };
+    if (appToken) {
+        headers["X-App-Token"] = appToken;
+    }
+
+    try {
+        const res = await fetch(`${API_BASE}/community/share`, {
+            method: "POST",
+            headers,
+            body: JSON.stringify(payload),
+        });
+        if (!res.ok) {
+            const text = await res.text();
+            console.error("community/share error:", res.status, text);
+            alert("Failed to share post.");
+            return;
+        }
+        msgBox.value = "";
+        loadCommunityFeed();
+    } catch (err) {
+        console.error("shareToCommunity failed:", err);
+        alert("Failed to share post (network error).");
+    }
+}
+
+async function loadCommunityFeed() {
+    const container = $("communityFeed");
+    if (!container) return;
+    container.innerHTML = `<p class="placeholder-text">Loading community feed…</p>`;
+
+    try {
+        const res = await fetch(`${API_BASE}/community/feed`);
+        if (!res.ok) {
+            const text = await res.text();
+            console.error("community/feed error:", res.status, text);
+            container.innerHTML =
+                `<p class="placeholder-text">Failed to load community feed.</p>`;
+            return;
+        }
+        const data = await res.json();
+        const posts = data.posts || data || [];
+        if (!posts.length) {
+            container.innerHTML =
+                `<p class="placeholder-text">No posts yet – be the first to share!</p>`;
+            return;
+        }
+
+        const html = posts
+            .map((p) => {
+                const name = p.display_name || "Anonymous traveler";
+                const when = p.created_at || "";
+                const summary = p.passport_summary || "";
+                const message = p.message || "";
+                return `
+                <div class="community-post">
+                    <div class="community-post-header">
+                        <span class="community-name">${name}</span>
+                        <span class="community-time">${when}</span>
+                    </div>
+                    <div class="community-passport-summary">
+                        <span class="badge-passport">Passport</span>
+                        <span class="community-country">${summary}</span>
+                    </div>
+                    <div class="community-message">${message}</div>
+                </div>
+            `;
+            })
+            .join("");
+
+        container.innerHTML = html;
+    } catch (err) {
+        console.error("loadCommunityFeed failed:", err);
+        container.innerHTML =
+            `<p class="placeholder-text">Failed to load community feed.</p>`;
+    }
+}
+
+/* ------------ Achievements ------------ */
+function computeAchievements(countryCount) {
+    const n = countryCount || 0;
+    const list = [];
+
+    if (n >= 1) {
+        list.push({
+            name: "First Stamp",
+            desc: "You’ve visited at least one country with your listening.",
+        });
+    }
+    if (n >= 5) {
+        list.push({
+            name: "Frequent Flyer",
+            desc: "Your tunes have crossed 5+ country borders.",
+        });
+    }
+    if (n >= 10) {
+        list.push({
+            name: "Globetrotter",
+            desc: "10 or more countries – your playlists need a passport of their own.",
+        });
+    }
+    if (n >= 15) {
+        list.push({
+            name: "Sonic Cartographer",
+            desc: "You’re mapping the whole world with music.",
+        });
+    }
+    if (n >= 20) {
+        list.push({
+            name: "Interstellar DJ",
+            desc: "Beyond borders – your listening goes everywhere.",
+        });
+    }
+
+    if (!list.length) {
+        list.push({
+            name: "Local Listener",
+            desc: "Start exploring artists from other countries to earn more stamps.",
+        });
+    }
+
+    return list;
+}
+
+function loadAchievements() {
+    const input = $("countryCountInput");
+    const box = $("achievementsList");
+    if (!input || !box) return;
+
+    const value = parseInt(input.value, 10);
+    const n = Number.isFinite(value) && value >= 0 ? value : 0;
+
+    const stamps = computeAchievements(n);
+    const html = stamps
+        .map(
+            (s) => `
+        <div class="achievement-item">
+            <strong>${s.name}</strong><br />
+            <span>${s.desc}</span>
+        </div>
+    `
+        )
+        .join("");
+
+    box.innerHTML = html;
+}
