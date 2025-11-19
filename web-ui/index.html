@@ -19,7 +19,7 @@
 
         <!-- MAIN GRID -->
         <main class="layout-grid">
-            <!-- LEFT COLUMN: SPOTIFY + USER -->
+            <!-- LEFT COLUMN: SPOTIFY + USER + PLAYLISTS -->
             <section class="card card-spotify">
                 <h2 class="card-title">Spotify</h2>
                 <p id="authStatus" class="status-text">Not logged in yet.</p>
@@ -39,7 +39,7 @@
                             Save Token
                         </button>
                         <button type="button" class="btn ghost" onclick="loadCurrentTrack()">
-                            Load Recent Track (debug)
+                            Load Profile / Debug
                         </button>
                     </div>
                     <p id="currentTrackLabel" class="small-label">No recent track loaded.</p>
@@ -70,18 +70,8 @@
             <!-- MIDDLE COLUMN: PASSPORT + ARTISTS BY COUNTRY -->
             <section class="card card-passport">
                 <div class="passport-header-row">
-                    <div class="planet-wrapper">
-                        <!-- Planet + pings -->
-                        <div class="planet-orbit">
-                            <div class="planet-core">
-                                <div class="planet-ping ping-1"></div>
-                                <div class="planet-ping ping-2"></div>
-                                <div class="planet-ping ping-3"></div>
-                            </div>
-                        </div>
-                        <!-- Tuniverse vinyl/planet logo -->
-                        <img src="assets/logo.png" alt="Tuniverse logo" class="planet-logo" />
-                    </div>
+                    <!-- ONLY the vinyl Earth logo here -->
+                    <img src="assets/logo.png" alt="Tuniverse passport logo" class="passport-logo-main" />
                     <div class="passport-header-text">
                         <h2 class="card-title">Music Passport</h2>
                         <p class="card-subtitle">
@@ -90,7 +80,7 @@
                     </div>
                 </div>
 
-                <!-- PASSPORT STATS ROW -->
+                <!-- PASSPORT STATS -->
                 <div id="passportStats" class="passport-stats">
                     <div class="stat-pill">
                         <span class="stat-label">Top Artist</span>
@@ -129,8 +119,8 @@
                         </p>
                     </div>
 
-                    <!-- Region icons row (Caribbean / NA / SA) -->
                     <div class="divider soft"></div>
+                    <!-- Region icons -->
                     <ul class="region-row">
                         <li>
                             <img src="assets/caribbean.png" alt="Caribbean" class="region-icon" />
@@ -195,7 +185,6 @@
                     </p>
                 </div>
 
-                <!-- GENRE BADGES -->
                 <div class="divider soft"></div>
                 <h3 class="card-subtitle">Genre Badges</h3>
                 <div class="genre-legend">
@@ -227,5 +216,3 @@
     <script src="app.js"></script>
 </body>
 </html>
-
-
