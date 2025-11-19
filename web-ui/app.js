@@ -214,6 +214,8 @@ function loginWithSpotify() {
     window.location.href = `${API_BASE}/auth/login`;
 }
 
+// saveAccessToken and loadCurrentTrack still exist if you ever re-add debug UI,
+// but they are no longer wired to buttons in index.html.
 function saveAccessToken() {
     const input = $("accessTokenInput");
     if (!input) return;
@@ -241,9 +243,6 @@ async function loadCurrentTrack() {
         if (!res.ok) {
             const text = await res.text();
             console.error("spotify/me error:", res.status, text);
-            if ($("currentTrackLabel")) {
-                $("currentTrackLabel").textContent = "Failed to load profile.";
-            }
             return;
         }
         const data = await res.json();
@@ -251,19 +250,8 @@ async function loadCurrentTrack() {
 
         const displayName = data.display_name || "";
         setDisplayName(displayName);
-
-        const nowPlaying = data.now_playing;
-        if (nowPlaying && $("currentTrackLabel")) {
-            $("currentTrackLabel").textContent =
-                `Listening to ${nowPlaying.track_name} – ${nowPlaying.artist_name}`;
-        } else if ($("currentTrackLabel")) {
-            $("currentTrackLabel").textContent = "No recent track info from Spotify.";
-        }
     } catch (err) {
         console.error("spotify/me failed:", err);
-        if ($("currentTrackLabel")) {
-            $("currentTrackLabel").textContent = "Error loading profile.";
-        }
     }
 }
 
@@ -404,46 +392,68 @@ function renderPassportCountries(data) {
     const { regionCounts, totalArtists } = buildRegionCounts(countryCounts);
     const numCountries = Object.keys(countryCounts).length;
 
-    const lines = [];
-    lines.push(
-        `<p>Passport snapshot: ${totalArtists} artist${totalArtists === 1 ? "" : "s"} across ${numCountries} countr${numCountries === 1 ? "y" : "ies"}.</p>`
-    );
-
     if (numCountries === 0) {
-        lines.push(`<p class="placeholder-text">No countries inferred yet.</p>`);
-    } else {
-        lines.push(`<p><strong>By country:</strong></p>`);
-        for (const [country, count] of Object.entries(countryCounts)) {
-            lines.push(`<p>${country}: ${count} artist(s)</p>`);
+        countriesBox.innerHTML = `
+            <p class="placeholder-text">No countries inferred yet. Listen to more artists from around the world to fill your passport.</p>
+        `;
+        const countryCountInput = $("countryCountInput");
+        if (countryCountInput) {
+            countryCountInput.value = "0";
         }
+        return;
     }
 
-    const regionEntries = Object.entries(regionCounts).filter(
-        ([region]) => region !== "Unknown"
-    );
-    const unknownCount = regionCounts["Unknown"] || 0;
+    // Sort countries and regions by count (descending)
+    const countryItems = Object.entries(countryCounts).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0));
+    const regionItems = Object.entries(regionCounts).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0));
 
-    if (regionEntries.length || unknownCount) {
-        lines.push(`<p><strong>By Tuniverse region:</strong></p>`);
-        for (const [region, count] of regionEntries) {
+    const countryListHtml = countryItems
+        .map(([country, count]) => {
+            return `<li>${country}: ${count} artist(s)</li>`;
+        })
+        .join("");
+
+    const regionListHtml = regionItems
+        .map(([region, count]) => {
             const pct = totalArtists ? ((count / totalArtists) * 100).toFixed(1) : "0.0";
             const iconPath = REGION_ICON_MAP[region] || null;
             const iconHtml = iconPath
                 ? `<img src="${iconPath}" alt="${region}" class="region-icon-inline" />`
                 : "";
-            lines.push(
-                `<p class="region-line">${iconHtml}<span class="region-name">${region}:</span> ${count} artist(s) – ${pct}%</p>`
-            );
-        }
-        if (unknownCount) {
-            const pct = totalArtists ? ((unknownCount / totalArtists) * 100).toFixed(1) : "0.0";
-            lines.push(
-                `<p class="region-line"><span class="region-name">Unknown:</span> ${unknownCount} artist(s) – ${pct}%</p>`
-            );
-        }
-    }
+            return `
+                <li>
+                    ${iconHtml}
+                    <span class="region-name">${region}:</span>
+                    ${count} artist(s) – ${pct}%
+                </li>
+            `;
+        })
+        .join("");
 
-    countriesBox.innerHTML = lines.join("");
+    countriesBox.innerHTML = `
+        <div class="passport-summary">
+            <div class="passport-summary-main">
+                <span class="passport-summary-number">${totalArtists}</span> artist${totalArtists === 1 ? "" : "s"}
+                across
+                <span class="passport-summary-number">${numCountries}</span>
+                countr${numCountries === 1 ? "y" : "ies"}.
+            </div>
+        </div>
+        <div class="passport-columns">
+            <div class="passport-column">
+                <div class="passport-column-title">By country</div>
+                <ul class="passport-list">
+                    ${countryListHtml}
+                </ul>
+            </div>
+            <div class="passport-column">
+                <div class="passport-column-title">By region</div>
+                <ul class="passport-list">
+                    ${regionListHtml}
+                </ul>
+            </div>
+        </div>
+    `;
 
     // auto-fill #countries for achievements (based on distinct countries)
     const countryCountInput = $("countryCountInput");
@@ -493,20 +503,24 @@ function updateArtistsByRegion(data) {
 
     const countryCounts = data.country_counts || {};
     const { regionCounts, totalArtists } = buildRegionCounts(countryCounts);
-    const regionEntries = Object.entries(regionCounts).filter(
-        ([region]) => region !== "Unknown"
-    );
-    const unknownCount = regionCounts["Unknown"] || 0;
+    const regionEntries = Object.entries(regionCounts);
 
-    if ((!regionEntries.length && !unknownCount) || totalArtists === 0) {
+    if (!regionEntries.length || totalArtists === 0) {
         box.innerHTML =
             `<p class="placeholder-text">No region data yet – load your passport first.</p>`;
         return;
     }
 
+    // sort regions by count desc, Unknown last
+    const sorted = regionEntries.sort((a, b) => {
+        if (a[0] === "Unknown") return 1;
+        if (b[0] === "Unknown") return -1;
+        return (b[1] ?? 0) - (a[1] ?? 0);
+    });
+
     const chunks = [];
 
-    for (const [region, count] of regionEntries) {
+    for (const [region, count] of sorted) {
         const pct = totalArtists ? ((count / totalArtists) * 100).toFixed(1) : "0.0";
         const iconPath = REGION_ICON_MAP[region] || null;
         const iconHtml = iconPath
@@ -519,20 +533,6 @@ function updateArtistsByRegion(data) {
                 </div>
                 <ul class="artists-country-list">
                     <li>${count} artist(s) – ${pct}% of your passport</li>
-                </ul>
-            </div>
-        `);
-    }
-
-    if (unknownCount) {
-        const pct = totalArtists ? ((unknownCount / totalArtists) * 100).toFixed(1) : "0.0";
-        chunks.push(`
-            <div class="artists-country-group">
-                <div class="artists-country-title">
-                    <span class="region-name">Unknown</span>
-                </div>
-                <ul class="artists-country-list">
-                    <li>${unknownCount} artist(s) – ${pct}% of your passport</li>
                 </ul>
             </div>
         `);
