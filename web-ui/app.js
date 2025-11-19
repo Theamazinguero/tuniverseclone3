@@ -314,7 +314,6 @@ function mapCountryToRegion(countryNameRaw) {
     if (COUNTRY_TO_TUNIVERSE_REGION[key]) {
         return COUNTRY_TO_TUNIVERSE_REGION[key];
     }
-    // Try uppercase code
     const upper = key.toUpperCase();
     if (COUNTRY_TO_TUNIVERSE_REGION[upper]) {
         return COUNTRY_TO_TUNIVERSE_REGION[upper];
@@ -356,21 +355,20 @@ async function loadPassportCountries() {
             console.log("passport snapshot:", passportData);
             renderPassportCountries(passportData);
             updatePassportStats(passportData);
-            updateArtistsByCountry(passportData);
+            updateArtistsByRegion(passportData);
         }
 
         // Handle top artist
+        const statTop = $("statTopArtist");
         if (topRes.ok) {
             const topData = await topRes.json();
             const items = topData.items || [];
             const first = items[0];
             const name = first && first.name ? first.name : null;
-            const statTop = $("statTopArtist");
             if (statTop) {
                 statTop.textContent = name || "No top artist data";
             }
         } else {
-            const statTop = $("statTopArtist");
             if (statTop) {
                 statTop.textContent = "No top artist data";
             }
@@ -429,11 +427,19 @@ function renderPassportCountries(data) {
         lines.push(`<p><strong>By Tuniverse region:</strong></p>`);
         for (const [region, count] of regionEntries) {
             const pct = totalArtists ? ((count / totalArtists) * 100).toFixed(1) : "0.0";
-            lines.push(`<p>${region}: ${count} artist(s) – ${pct}%</p>`);
+            const iconPath = REGION_ICON_MAP[region] || null;
+            const iconHtml = iconPath
+                ? `<img src="${iconPath}" alt="${region}" class="region-icon-inline" />`
+                : "";
+            lines.push(
+                `<p class="region-line">${iconHtml}<span class="region-name">${region}:</span> ${count} artist(s) – ${pct}%</p>`
+            );
         }
         if (unknownCount) {
             const pct = totalArtists ? ((unknownCount / totalArtists) * 100).toFixed(1) : "0.0";
-            lines.push(`<p>Unknown: ${unknownCount} artist(s) – ${pct}%</p>`);
+            lines.push(
+                `<p class="region-line"><span class="region-name">Unknown:</span> ${unknownCount} artist(s) – ${pct}%</p>`
+            );
         }
     }
 
@@ -447,7 +453,6 @@ function renderPassportCountries(data) {
 }
 
 function updatePassportStats(data) {
-    const topArtistEl = $("statTopArtist"); // only used for existence check
     const totalEl = $("statTotalArtists");
     const favRegionEl = $("statFavRegion");
     const favRegionIcon = $("favRegionIcon");
@@ -469,6 +474,8 @@ function updatePassportStats(data) {
             favRegion = region;
         }
     }
+
+    // If we literally have no non-Unknown regions, keep "Unknown"
     favRegionEl.textContent = favRegion;
 
     const iconPath = REGION_ICON_MAP[favRegion] || null;
@@ -479,22 +486,18 @@ function updatePassportStats(data) {
         favRegionIcon.src = "";
         favRegionIcon.style.visibility = "hidden";
     }
-
-    // if top artist element exists but hasn't been set by top-artists call, leave as "—"
-    if (topArtistEl && !topArtistEl.textContent) {
-        topArtistEl.textContent = "—";
-    }
 }
 
-function updateArtistsByCountry(data) {
-    const box = $("artistsByCountryList");
+/* Artists by Region panel (formerly Artists by Country) */
+function updateArtistsByRegion(data) {
+    const box = $("artistsByCountryList"); // reuse same DOM id for simplicity
     if (!box) return;
 
     const countryCounts = data.country_counts || {};
     const entries = Object.entries(countryCounts);
     if (!entries.length) {
         box.innerHTML =
-            `<p class="placeholder-text">No countries yet – load your passport first.</p>`;
+            `<p class="placeholder-text">No region data yet – load your passport first.</p>`;
         return;
     }
 
