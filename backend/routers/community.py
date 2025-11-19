@@ -20,12 +20,12 @@ class CommunityPostIn(BaseModel):
         {
             display_name: string,
             message: string,
-            passport_summary: string | null
+            passport_summary: string (can contain HTML)
         }
     """
     display_name: str = Field(..., max_length=80)
     message: str = Field(..., max_length=500)
-    passport_summary: Optional[str] = Field(None, max_length=500)
+    passport_summary: Optional[str] = Field(None, max_length=4000)
 
 
 class CommunityPostOut(CommunityPostIn):
@@ -49,22 +49,12 @@ async def share_post(
     Accept a post from the UI and stash it in memory.
     X-App-Token is accepted but not enforced for now.
     """
-    # normalize some values
     display_name = (post.display_name or "").strip() or "Anonymous traveler"
     message = (post.message or "").strip()
-    passport_summary = (post.passport_summary or "").strip() or None
+    passport_summary = post.passport_summary or ""
 
-    # basic guard: don’t allow empty message
     if not message:
-        # Note: returning 200 with a short message instead of 422
-        # keeps the UI simpler for the demo.
-        return CommunityPostOut(
-            id=len(COMMUNITY_FEED) + 1,
-            display_name=display_name,
-            message="[empty message]",
-            passport_summary=passport_summary,
-            created_at=datetime.now(timezone.utc).isoformat(),
-        )
+        message = "[empty message]"
 
     created_at = datetime.now(timezone.utc).isoformat()
     new_post = CommunityPostOut(
@@ -75,7 +65,6 @@ async def share_post(
         created_at=created_at,
     )
 
-    # store newest first
     COMMUNITY_FEED.insert(0, new_post)
     return new_post
 
