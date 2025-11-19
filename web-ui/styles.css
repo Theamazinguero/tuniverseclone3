@@ -13,7 +13,16 @@ html, body {
     height: 100%;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     color: #e6e6ff;
-    background: radial-gradient(circle at top, #221b4a 0, #05030f 55%, #020008 100%);
+}
+
+/* Use your drawn star field as the background */
+body {
+    background: #020008;
+    background-image: url("bg.png");
+    background-size: cover;
+    background-position: center top;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
 }
 
 /* ------------- LAYOUT SHELL ------------- */
@@ -25,28 +34,36 @@ html, body {
     display: flex;
     flex-direction: column;
     gap: 24px;
+    background: linear-gradient(
+        to bottom,
+        rgba(5, 5, 30, 0.85),
+        rgba(5, 5, 30, 0.95)
+    );
+    border-radius: 24px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
 }
 
 /* ------------- HEADER ------------- */
 .app-header {
-    text-align: center;              /* center the main text */
+    text-align: center;
     padding: 8px 8px 4px;
 }
 
-.app-title {
-    margin: 0;
-    font-size: 2.4rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: #f5f3ff;
-    text-shadow: 0 0 12px rgba(132, 94, 247, 0.9);
+/* Tuniverse text as an image */
+.app-title-img {
+    max-width: 320px;
+    width: 60%;
+    height: auto;
+    filter:
+        drop-shadow(0 0 12px rgba(0, 0, 0, 0.8))
+        drop-shadow(0 0 16px rgba(245, 245, 120, 0.7));
 }
 
 .app-subtitle {
     margin: 8px auto 0;
     max-width: 640px;
     font-size: 0.98rem;
-    color: #b8b5ff;
+    color: #fcefb1;
 }
 
 /* ------------- GRID ------------- */
@@ -59,14 +76,14 @@ html, body {
 /* ------------- CARDS ------------- */
 .card {
     position: relative;
-    background: radial-gradient(circle at top left, rgba(79, 70, 229, 0.35), rgba(17, 24, 39, 0.88));
+    background: radial-gradient(circle at top left, rgba(79, 70, 229, 0.35), rgba(17, 24, 39, 0.94));
     border-radius: 18px;
     border: 1px solid rgba(148, 163, 255, 0.25);
     padding: 14px 14px 16px;
     box-shadow:
-        0 14px 40px rgba(15, 23, 42, 0.8),
+        0 14px 40px rgba(15, 23, 42, 0.9),
         0 0 30px rgba(94, 234, 212, 0.18);
-    backdrop-filter: blur(20px);
+    backdrop-filter: blur(18px);
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -346,7 +363,7 @@ html, body {
     left: 32%;
 }
 
-/* LOGO MOVED HERE */
+/* LOGO (vinyl planet) near the ping planet */
 .planet-logo {
     position: absolute;
     bottom: -6px;
@@ -357,6 +374,39 @@ html, body {
         drop-shadow(0 0 12px rgba(129, 140, 248, 0.9))
         drop-shadow(0 0 22px rgba(56, 189, 248, 0.7));
     pointer-events: none;
+}
+
+/* ------------- NEW: PASSPORT STATS ROW ------------- */
+.passport-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+    margin-bottom: 4px;
+}
+
+.stat-pill {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    border: 1px solid rgba(148, 163, 255, 0.6);
+    background: rgba(15, 23, 42, 0.95);
+    min-width: 110px;
+}
+
+.stat-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #a5b4fc;
+}
+
+.stat-value {
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: #e5e7ff;
 }
 
 /* ------------- COMMUNITY FEED ------------- */
@@ -455,6 +505,50 @@ html, body {
     padding-left: 16px;
     font-size: 0.78rem;
     color: #cbd5ff;
+}
+
+/* ------------- REGION ICON ROW (EAGLE / JAGUAR / SHELL) ------------- */
+.region-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 2px 0;
+    list-style: none;
+    padding-left: 0;
+}
+
+.region-icon {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.6));
+}
+
+/* ------------- GENRE LEGEND (ROCK / RAP / EDM / POP / COUNTRY) ------------- */
+.genre-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.genre-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 255, 0.55);
+    background: rgba(15, 23, 42, 0.9);
+    font-size: 0.78rem;
+    color: #e5e7ff;
+}
+
+.genre-icon {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.75));
 }
 
 /* ------------- RESPONSIVE (BASIC) ------------- */
