@@ -16,7 +16,7 @@ body {
     color: #e6e6ff;
 }
 
-/* use your drawn star background */
+/* star background */
 body {
     background: #020008;
     background-image: url("assets/bg.png");
@@ -31,7 +31,7 @@ body {
     min-height: 100vh;
     max-width: 1200px;
     margin: 0 auto;
-    padding: 24px 16px 32px;
+    padding: 32px 16px 32px;
     display: flex;
     flex-direction: column;
     gap: 24px;
@@ -47,20 +47,21 @@ body {
 /* -------- HEADER -------- */
 .app-header {
     text-align: center;
-    padding: 8px 8px 4px;
+    padding: 16px 8px 4px;
 }
 
 .app-title-img {
     max-width: 320px;
     width: 60%;
     height: auto;
+    margin-top: 12px; /* bring the logo down a bit */
     filter:
         drop-shadow(0 0 12px rgba(0, 0, 0, 0.8))
         drop-shadow(0 0 16px rgba(245, 245, 120, 0.7));
 }
 
 .app-subtitle {
-    margin: 8px auto 0;
+    margin: 10px auto 0;
     max-width: 640px;
     font-size: 0.98rem;
     color: #fcefb1;
@@ -326,7 +327,11 @@ body {
     border-radius: 12px;
     border: 1px solid rgba(148, 163, 255, 0.6);
     background: rgba(15, 23, 42, 0.95);
-    min-width: 110px;
+    min-width: 120px;
+}
+
+.stat-pill-region {
+    min-width: 150px;
 }
 
 .stat-label {
@@ -340,6 +345,12 @@ body {
     font-size: 0.86rem;
     font-weight: 600;
     color: #e5e7ff;
+}
+
+.stat-region-value {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
 /* -------- COMMUNITY FEED -------- */
@@ -444,6 +455,7 @@ body {
 .region-row {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 6px;
     margin: 2px 0;
     list-style: none;
@@ -455,6 +467,11 @@ body {
     height: 22px;
     object-fit: contain;
     filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.6));
+}
+
+.region-icon-large {
+    width: 24px;
+    height: 24px;
 }
 
 /* -------- GENRE LEGEND -------- */
@@ -498,4 +515,3 @@ body {
         width: 110px;
     }
 }
-
