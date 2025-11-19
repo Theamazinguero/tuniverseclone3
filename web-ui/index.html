@@ -1,126 +1,172 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Tuniverse</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="styles.css" />
+    <meta charset="UTF-8" />
+    <title>Tuniverse – Music Passport</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div id="app">
-    <!-- Top hero row: title + optional logo area (where planet-with-pings used to be) -->
-    <header>
-      <div class="hero-row">
-        <div class="hero-text">
-          <h1>Tuniverse</h1>
-          <p>
-            Explore your music passport, share your journey, and see how your listening
-            paints the world.
-          </p>
-          <p style="font-size: 0.85rem; opacity: 0.85;">
-            Backend:
-            <span id="backend-display">http://127.0.0.1:8000</span>
-          </p>
-        </div>
+    <div class="app-shell">
+        <!-- HEADER -->
+        <header class="app-header">
+            <h1 class="app-title">Tuniverse</h1>
+            <p class="app-subtitle">
+                Track your musical travels across the globe and share your passport with the world.
+            </p>
+        </header>
 
-        <!-- This div will show the logo via CSS (replaces “planet with pings”) -->
-        <div id="hero-logo"></div>
-      </div>
-    </header>
+        <!-- MAIN GRID -->
+        <main class="layout-grid">
+            <!-- LEFT COLUMN: SPOTIFY + USER -->
+            <section class="card card-spotify">
+                <h2 class="card-title">Spotify</h2>
+                <p id="authStatus" class="status-text">Not logged in yet.</p>
 
-    <main>
-      <!-- 1) CONNECT SPOTIFY -->
-      <section id="connect-spotify-section">
-        <h2>1) Connect Spotify</h2>
+                <div class="button-row">
+                    <button type="button" class="btn primary" onclick="loginWithSpotify()">
+                        Login with Spotify
+                    </button>
+                </div>
 
-        <div class="field-group">
-          <label for="backend-url">Backend URL</label>
-          <input
-            type="text"
-            id="backend-url"
-            value="http://127.0.0.1:8000"
-            autocomplete="off"
-          />
-        </div>
+                <div class="field-group">
+                    <label for="accessTokenInput">Paste Spotify Access Token (debug)</label>
+                    <textarea id="accessTokenInput" class="input-textarea" rows="3"
+                              placeholder="Access token from Spotify redirect…"></textarea>
+                    <div class="button-row">
+                        <button type="button" class="btn secondary" onclick="saveAccessToken()">
+                            Save Token
+                        </button>
+                        <button type="button" class="btn ghost" onclick="loadCurrentTrack()">
+                            Load Recent Track (debug)
+                        </button>
+                    </div>
+                    <p id="currentTrackLabel" class="small-label">No recent track loaded.</p>
+                </div>
 
-        <div class="button-row">
-          <button id="login-button">Login with Spotify</button>
-          <button id="logout-button" class="secondary">Logout</button>
-        </div>
+                <div class="divider"></div>
 
-        <p class="signed-in-text">
-          Signed in as: <span id="user-display">Not signed in</span>
-        </p>
+                <h3 class="card-subtitle">User</h3>
+                <div class="field-group">
+                    <label for="displayNameInput">Display Name</label>
+                    <input id="displayNameInput" class="input-text" type="text"
+                           placeholder="Your display name" />
+                </div>
 
-        <div class="field-group">
-          <label for="access-token">Access Token (debug; filled after login)</label>
-          <textarea
-            id="access-token"
-            rows="3"
-            spellcheck="false"
-            placeholder="Token will appear here after login..."
-          ></textarea>
-        </div>
-      </section>
+                <div class="divider"></div>
 
-      <!-- 2) PASSPORT -->
-      <section id="passport-section">
-        <h2>2) Passport Snapshot</h2>
+                <h3 class="card-subtitle">My Playlists</h3>
+                <div class="button-row">
+                    <button type="button" class="btn secondary" onclick="loadPlaylists()">
+                        Load Playlists
+                    </button>
+                </div>
+                <div id="playlistsList" class="scroll-box small-scroll">
+                    <p class="placeholder-text">Playlists will appear here.</p>
+                </div>
+            </section>
 
-        <div class="button-row">
-          <button id="refresh-passport-button">Refresh Passport</button>
-        </div>
+            <!-- MIDDLE COLUMN: PASSPORT + ARTISTS BY COUNTRY -->
+            <section class="card card-passport">
+                <div class="passport-header-row">
+                    <div class="planet-wrapper">
+                        <!-- Planet + pings -->
+                        <div class="planet-orbit">
+                            <div class="planet-core">
+                                <div class="planet-ping ping-1"></div>
+                                <div class="planet-ping ping-2"></div>
+                                <div class="planet-ping ping-3"></div>
+                            </div>
+                        </div>
+                        <!-- LOGO MOVED HERE -->
+                        <img src="logo_clean.png" alt="Tuniverse logo" class="planet-logo" />
+                    </div>
+                    <div class="passport-header-text">
+                        <h2 class="card-title">Music Passport</h2>
+                        <p class="card-subtitle">
+                            See which countries your listening has visited.
+                        </p>
+                    </div>
+                </div>
 
-        <div class="passport-grid" style="margin-top: 0.7rem;">
-          <div class="passport-column">
-            <h3>Summary</h3>
-            <div id="passport-summary" class="info-box">
-              Passport snapshot will appear here.
-            </div>
-          </div>
+                <div class="passport-body">
+                    <div class="field-group">
+                        <div class="button-row">
+                            <button type="button" class="btn primary" onclick="loadPassportCountries()">
+                                Load Countries
+                            </button>
+                        </div>
+                        <div id="countriesList" class="scroll-box">
+                            <p class="placeholder-text">
+                                Snapshot of your passport will appear here.
+                            </p>
+                        </div>
+                    </div>
 
-          <div class="passport-column">
-            <h3>By Region</h3>
-            <div id="passport-regions" class="info-box">
-              Region breakdown will appear here.
-            </div>
-          </div>
-        </div>
+                    <div class="divider soft"></div>
 
-        <h3>Artists by Country</h3>
-        <div id="artists-by-country" class="info-box">
-          Artists grouped by country will appear here once wired up.
-        </div>
-      </section>
+                    <h3 class="card-subtitle">Artists by Country</h3>
+                    <div id="artistsByCountryList" class="scroll-box">
+                        <p class="placeholder-text">
+                            Artists grouped by country will appear here once loaded.
+                        </p>
+                    </div>
+                </div>
+            </section>
 
-      <!-- 3) COMMUNITY -->
-      <section id="community-section">
-        <h2>3) Community</h2>
-        <p class="section-note">
-          Share a snapshot of your passport with the Tuniverse community.
-        </p>
+            <!-- RIGHT COLUMN: COMMUNITY + ACHIEVEMENTS -->
+            <section class="card card-community">
+                <h2 class="card-title">Community</h2>
+                <p class="card-subtitle">
+                    Share your passport snapshot with other travelers.
+                </p>
 
-        <div class="field-group">
-          <label for="community-message">Message</label>
-          <textarea
-            id="community-message"
-            rows="3"
-            placeholder="Say something about your latest music journey..."
-          ></textarea>
-        </div>
+                <div class="field-group">
+                    <label for="communityMessageInput">Say something</label>
+                    <textarea id="communityMessageInput" class="input-textarea" rows="3"
+                              placeholder="Say something about your music passport…"></textarea>
+                </div>
 
-        <div class="button-row">
-          <button id="community-share-button">Share to Community</button>
-        </div>
+                <div class="button-row">
+                    <button type="button" class="btn primary" onclick="shareToCommunity()">
+                        Share
+                    </button>
+                    <button type="button" class="btn secondary" onclick="loadCommunityFeed()">
+                        Refresh Feed
+                    </button>
+                </div>
 
-        <h3>Community Feed</h3>
-        <div id="community-feed" class="info-box">
-          Feed posts will appear here.
-        </div>
-      </section>
-    </main>
-  </div>
+                <div id="communityFeed" class="scroll-box">
+                    <p class="placeholder-text">
+                        No posts yet. Share your first passport!
+                    </p>
+                </div>
 
-  <script src="app.js"></script>
+                <div class="divider"></div>
+
+                <h2 class="card-title">Achievements</h2>
+                <p class="card-subtitle">
+                    Based on the number of countries in your passport.
+                </p>
+
+                <div class="field-group inline">
+                    <label for="countryCountInput"># of Countries</label>
+                    <input id="countryCountInput" class="input-text small" type="number" min="0"
+                           placeholder="Auto-filled from passport" />
+                    <button type="button" class="btn secondary btn-sm" onclick="loadAchievements()">
+                        Refresh
+                    </button>
+                </div>
+
+                <div id="achievementsList" class="scroll-box small-scroll">
+                    <p class="placeholder-text">
+                        Your achievement stamps will appear here.
+                    </p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
 </body>
 </html>
