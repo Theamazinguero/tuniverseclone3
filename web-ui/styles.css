@@ -18,7 +18,7 @@ html, body {
 /* Use your drawn star field as the background */
 body {
     background: #020008;
-    background-image: url("bg.png");
+    background-image: url("assets/bg.png");
     background-size: cover;
     background-position: center top;
     background-repeat: no-repeat;
@@ -376,7 +376,7 @@ body {
     pointer-events: none;
 }
 
-/* ------------- NEW: PASSPORT STATS ROW ------------- */
+/* ------------- PASSPORT STATS ROW ------------- */
 .passport-stats {
     display: flex;
     flex-wrap: wrap;
