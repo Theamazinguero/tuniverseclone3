@@ -10,7 +10,8 @@
     <div class="app-shell">
         <!-- HEADER -->
         <header class="app-header">
-            <h1 class="app-title">Tuniverse</h1>
+            <!-- Tuniverse title image -->
+            <img src="assets/tuniversetext.png" alt="Tuniverse" class="app-title-img" />
             <p class="app-subtitle">
                 Track your musical travels across the globe and share your passport with the world.
             </p>
@@ -78,14 +79,30 @@
                                 <div class="planet-ping ping-3"></div>
                             </div>
                         </div>
-                        <!-- LOGO MOVED HERE -->
-                        <img src="logo_clean.png" alt="Tuniverse logo" class="planet-logo" />
+                        <!-- Tuniverse vinyl/planet logo -->
+                        <img src="assets/logo.png" alt="Tuniverse logo" class="planet-logo" />
                     </div>
                     <div class="passport-header-text">
                         <h2 class="card-title">Music Passport</h2>
                         <p class="card-subtitle">
                             See which countries your listening has visited.
                         </p>
+                    </div>
+                </div>
+
+                <!-- PASSPORT STATS ROW -->
+                <div id="passportStats" class="passport-stats">
+                    <div class="stat-pill">
+                        <span class="stat-label">Top Artist</span>
+                        <span class="stat-value" id="statTopArtist">—</span>
+                    </div>
+                    <div class="stat-pill">
+                        <span class="stat-label">Total Artists</span>
+                        <span class="stat-value" id="statTotalArtists">0</span>
+                    </div>
+                    <div class="stat-pill">
+                        <span class="stat-label">Favorite Region</span>
+                        <span class="stat-value" id="statFavRegion">—</span>
                     </div>
                 </div>
 
@@ -111,10 +128,24 @@
                             Artists grouped by country will appear here once loaded.
                         </p>
                     </div>
+
+                    <!-- Region icons row (Caribbean / NA / SA) -->
+                    <div class="divider soft"></div>
+                    <ul class="region-row">
+                        <li>
+                            <img src="assets/caribbean.png" alt="Caribbean" class="region-icon" />
+                        </li>
+                        <li>
+                            <img src="assets/northamerica.png" alt="North America" class="region-icon" />
+                        </li>
+                        <li>
+                            <img src="assets/southamerica.png" alt="South America" class="region-icon" />
+                        </li>
+                    </ul>
                 </div>
             </section>
 
-            <!-- RIGHT COLUMN: COMMUNITY + ACHIEVEMENTS -->
+            <!-- RIGHT COLUMN: COMMUNITY + ACHIEVEMENTS + GENRES -->
             <section class="card card-community">
                 <h2 class="card-title">Community</h2>
                 <p class="card-subtitle">
@@ -163,6 +194,32 @@
                         Your achievement stamps will appear here.
                     </p>
                 </div>
+
+                <!-- GENRE BADGES -->
+                <div class="divider soft"></div>
+                <h3 class="card-subtitle">Genre Badges</h3>
+                <div class="genre-legend">
+                    <div class="genre-badge">
+                        <img src="assets/rock.png" alt="Rock" class="genre-icon" />
+                        <span>Rock</span>
+                    </div>
+                    <div class="genre-badge">
+                        <img src="assets/rap.png" alt="Rap" class="genre-icon" />
+                        <span>Rap</span>
+                    </div>
+                    <div class="genre-badge">
+                        <img src="assets/edm.png" alt="EDM" class="genre-icon" />
+                        <span>EDM</span>
+                    </div>
+                    <div class="genre-badge">
+                        <img src="assets/pop.png" alt="Pop" class="genre-icon" />
+                        <span>Pop</span>
+                    </div>
+                    <div class="genre-badge">
+                        <img src="assets/country.png" alt="Country" class="genre-icon" />
+                        <span>Country</span>
+                    </div>
+                </div>
             </section>
         </main>
     </div>
@@ -170,3 +227,5 @@
     <script src="app.js"></script>
 </body>
 </html>
+
+
