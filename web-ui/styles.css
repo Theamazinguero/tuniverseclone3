@@ -1,242 +1,473 @@
-/* ===== BASIC RESET ===== */
+/* web-ui/styles.css */
+
+/* ------------- RESET-ish ------------- */
 *,
 *::before,
 *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+    box-sizing: border-box;
 }
 
-html,
-body {
-  height: 100%;
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: #e6e6ff;
+    background: radial-gradient(circle at top, #221b4a 0, #05030f 55%, #020008 100%);
 }
 
-/* ===== PAGE BASE ===== */
-body {
-  margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
-  background: radial-gradient(circle at top, #181c3c 0, #050816 40%, #02030a 100%);
-  color: #f5f7ff;
-
-  /* Center main content horizontally */
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
+/* ------------- LAYOUT SHELL ------------- */
+.app-shell {
+    min-height: 100vh;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px 16px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
 }
 
-/* Whatever your top-level wrapper is, this will at least catch body children */
-body > * {
-  width: 100%;
-  max-width: 960px;   /* keeps everything in a nice centered column */
-  margin: 1.5rem auto;
-  padding: 0 1rem;
+/* ------------- HEADER ------------- */
+.app-header {
+    text-align: center;              /* center the main text */
+    padding: 8px 8px 4px;
 }
 
-/* If you have a main tag, make it a vertical stack */
-main {
-  display: flex;
-  flex-direction: column;
-  gap: 1.2rem;
+.app-title {
+    margin: 0;
+    font-size: 2.4rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #f5f3ff;
+    text-shadow: 0 0 12px rgba(132, 94, 247, 0.9);
 }
 
-/* ===== GENERIC SECTION / CARD LOOK ===== */
-/* These apply to your existing sections without needing class names */
-
-section {
-  background: rgba(7, 10, 30, 0.9);
-  border-radius: 16px;
-  padding: 1.25rem 1.35rem;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+.app-subtitle {
+    margin: 8px auto 0;
+    max-width: 640px;
+    font-size: 0.98rem;
+    color: #b8b5ff;
 }
 
-/* Headings */
-h1,
-h2,
-h3 {
-  margin-bottom: 0.5rem;
+/* ------------- GRID ------------- */
+.layout-grid {
+    display: grid;
+    grid-template-columns: 1.1fr 1.1fr 1.2fr;
+    gap: 16px;
 }
 
-h1 {
-  font-size: 2.1rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+/* ------------- CARDS ------------- */
+.card {
+    position: relative;
+    background: radial-gradient(circle at top left, rgba(79, 70, 229, 0.35), rgba(17, 24, 39, 0.88));
+    border-radius: 18px;
+    border: 1px solid rgba(148, 163, 255, 0.25);
+    padding: 14px 14px 16px;
+    box-shadow:
+        0 14px 40px rgba(15, 23, 42, 0.8),
+        0 0 30px rgba(94, 234, 212, 0.18);
+    backdrop-filter: blur(20px);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
-h2 {
-  font-size: 1.25rem;
+.card-spotify {
+    border-color: rgba(94, 234, 212, 0.4);
 }
 
-h3 {
-  font-size: 1rem;
+.card-passport {
+    border-color: rgba(244, 114, 182, 0.4);
 }
 
-/* Make labels / small text clearer */
-label {
-  font-size: 0.85rem;
-  opacity: 0.9;
+.card-community {
+    border-color: rgba(129, 140, 248, 0.5);
 }
 
-/* ===== FORM ELEMENTS ===== */
-
-input[type="text"],
-textarea {
-  width: 100%;
-  background: rgba(10, 14, 40, 0.98);
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  padding: 0.55rem 0.7rem;
-  color: #f5f7ff;
-  font-size: 0.9rem;
-  resize: vertical;
-  outline: none;
-  margin-top: 0.15rem;
-  margin-bottom: 0.5rem;
+/* ------------- TYPOGRAPHY ------------- */
+.card-title {
+    font-size: 1.1rem;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: #e5e7ff;
 }
 
-input[type="text"]:focus,
-textarea:focus {
-  border-color: #66b3ff;
-  box-shadow: 0 0 0 1px rgba(102, 179, 255, 0.45);
+.card-subtitle {
+    margin: 4px 0 0;
+    font-size: 0.83rem;
+    color: #c4c6ff;
 }
 
-/* Group controls */
+.status-text {
+    margin: 6px 0 0;
+    font-size: 0.8rem;
+    color: #a5b4fc;
+}
+
+.small-label {
+    margin: 4px 0 0;
+    font-size: 0.78rem;
+    color: #9ca3ff;
+}
+
+.placeholder-text {
+    margin: 0;
+    font-size: 0.83rem;
+    color: #8488c7;
+}
+
+/* ------------- CONTROLS ------------- */
 .field-group {
-  margin-top: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
 }
 
-/* ===== BUTTONS ===== */
-
-button {
-  border: none;
-  border-radius: 999px;
-  padding: 0.5rem 1.1rem;
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-  color: #ffffff;
-  background: linear-gradient(135deg, #4f80ff, #9b5aff);
-  transition: transform 0.08s ease, box-shadow 0.08s ease, opacity 0.1s ease;
-  margin-right: 0.4rem;
-  margin-top: 0.4rem;
+.field-group.inline {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
 }
 
-button.secondary {
-  background: rgba(255, 255, 255, 0.1);
+.field-group label {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #9ca3ff;
 }
 
-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+.input-text,
+.input-textarea {
+    width: 100%;
+    border-radius: 10px;
+    border: 1px solid rgba(148, 163, 255, 0.5);
+    background: rgba(15, 23, 42, 0.85);
+    padding: 7px 9px;
+    font-size: 0.85rem;
+    color: #e5e7ff;
+    outline: none;
 }
 
-button:active {
-  transform: translateY(1px);
-  box-shadow: none;
-  opacity: 0.9;
+.input-text:focus,
+.input-textarea:focus {
+    border-color: rgba(129, 140, 248, 0.9);
+    box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.45);
 }
 
-/* Button rows, if you have wrappers */
+.input-text.small {
+    max-width: 120px;
+}
+
+.input-textarea {
+    resize: vertical;
+}
+
 .button-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
 }
 
-/* ===== INFO / FEED BOXES ===== */
-
-.info-box,
-#passport-summary,
-#passport-regions,
-#artists-by-country,
-#community-feed {
-  background: rgba(5, 8, 24, 0.96);
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 0.7rem 0.8rem;
-  font-size: 0.9rem;
-  overflow-wrap: anywhere;
+/* ------------- BUTTONS ------------- */
+.btn {
+    border-radius: 999px;
+    border: none;
+    padding: 6px 14px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
 }
 
-/* Scrollable feed */
-#community-feed {
-  max-height: 260px;
-  overflow-y: auto;
+.btn-sm {
+    padding: 4px 10px;
+    font-size: 0.76rem;
 }
 
-/* Scrollbar tweak (if supported) */
-#community-feed::-webkit-scrollbar {
-  width: 6px;
+.btn.primary {
+    background: linear-gradient(90deg, #6366f1, #ec4899);
+    color: white;
+    box-shadow: 0 0 16px rgba(129, 140, 248, 0.75);
 }
 
-#community-feed::-webkit-scrollbar-track {
-  background: transparent;
+.btn.primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px rgba(79, 70, 229, 0.6);
 }
 
-#community-feed::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 999px;
+.btn.secondary {
+    background: rgba(15, 23, 42, 0.8);
+    color: #e5e7ff;
+    border: 1px solid rgba(148, 163, 255, 0.75);
 }
 
-/* ===== HERO LOGO (REPLACES PLANET) ===== */
-/* Use this on the element that used to hold the planet with pings */
+.btn.secondary:hover {
+    background: rgba(30, 64, 175, 0.75);
+}
 
-#hero-logo,
-#planet-with-pings,
+.btn.ghost {
+    background: transparent;
+    color: #a5b4fc;
+    border: 1px dashed rgba(148, 163, 255, 0.55);
+}
+
+.btn.ghost:hover {
+    background: rgba(30, 64, 175, 0.3);
+}
+
+/* ------------- SCROLL CONTAINERS ------------- */
+.scroll-box {
+    margin-top: 6px;
+    padding: 6px 8px;
+    border-radius: 12px;
+    border: 1px solid rgba(148, 163, 255, 0.35);
+    background: radial-gradient(circle at top, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.92));
+    max-height: 210px;
+    overflow: auto;
+    font-size: 0.83rem;
+}
+
+.scroll-box.small-scroll {
+    max-height: 150px;
+}
+
+.scroll-box p {
+    margin: 2px 0;
+}
+
+/* Pretty-scrollbars (WebKit-based) */
+.scroll-box::-webkit-scrollbar {
+    width: 6px;
+}
+.scroll-box::-webkit-scrollbar-track {
+    background: transparent;
+}
+.scroll-box::-webkit-scrollbar-thumb {
+    background: rgba(129, 140, 248, 0.7);
+    border-radius: 999px;
+}
+
+/* ------------- DIVIDERS ------------- */
+.divider {
+    height: 1px;
+    margin: 8px 0;
+    background: linear-gradient(
+        90deg,
+        rgba(148, 163, 255, 0),
+        rgba(148, 163, 255, 0.7),
+        rgba(148, 163, 255, 0)
+    );
+}
+
+.divider.soft {
+    opacity: 0.6;
+}
+
+/* ------------- PASSPORT PLANET + LOGO ------------- */
+.passport-header-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.passport-header-text {
+    flex: 1;
+}
+
 .planet-wrapper {
-  /* Any one of these matching your old container will pick this up */
-  width: 260px;
-  height: 260px;
-  margin: 1.5rem auto;
-  background-image: url("assets/tuniverse-logo.png"); /* adjust path if needed */
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  filter: drop-shadow(0 0 28px rgba(0, 0, 0, 0.85));
+    position: relative;
+    width: 120px;
+    height: 120px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-/* If that container is inside a flex row, keep it centered */
-.hero-row,
-.header-row,
-.top-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
+/* Orbit ring */
+.planet-orbit {
+    width: 110px;
+    height: 110px;
+    border-radius: 999px;
+    border: 2px dashed rgba(94, 234, 212, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow:
+        0 0 15px rgba(94, 234, 212, 0.5),
+        0 0 40px rgba(79, 70, 229, 0.4);
 }
 
-/* ===== PASSPORT TWO-COLUMN LAYOUT (WHEN POSSIBLE) ===== */
-
-.passport-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 0.8rem;
+/* Earth-like sphere */
+.planet-core {
+    width: 70px;
+    height: 70px;
+    border-radius: 999px;
+    background:
+        radial-gradient(circle at 30% 20%, #f9fafb 0, #e0f2fe 16%, transparent 40%),
+        radial-gradient(circle at 65% 70%, #22c55e 0, #16a34a 35%, #064e3b 60%, transparent 80%),
+        radial-gradient(circle at 20% 75%, #22d3ee 0, #0ea5e9 35%, #0369a1 60%);
+    box-shadow:
+        inset -8px -10px 20px rgba(15, 23, 42, 0.85),
+        0 0 24px rgba(94, 234, 212, 0.45);
+    position: relative;
+    overflow: hidden;
 }
 
-/* ===== SMALL / RESPONSIVE TWEAKS ===== */
-
-@media (max-width: 720px) {
-  body > * {
-    margin: 1rem auto;
-    padding: 0 0.75rem;
-  }
-
-  h1 {
-    font-size: 1.8rem;
-  }
-
-  section {
-    padding: 1rem 1rem;
-  }
-
-  #hero-logo,
-  #planet-with-pings,
-  .planet-wrapper {
-    width: 200px;
-    height: 200px;
-  }
+/* Pings */
+.planet-ping {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: #a855f7;
+    box-shadow: 0 0 12px rgba(168, 85, 247, 0.8);
 }
 
+.ping-1 {
+    top: 22%;
+    left: 18%;
+}
 
+.ping-2 {
+    top: 45%;
+    right: 12%;
+}
+
+.ping-3 {
+    bottom: 20%;
+    left: 32%;
+}
+
+/* LOGO MOVED HERE */
+.planet-logo {
+    position: absolute;
+    bottom: -6px;
+    right: -8px;
+    width: 52px;
+    height: auto;
+    filter:
+        drop-shadow(0 0 12px rgba(129, 140, 248, 0.9))
+        drop-shadow(0 0 22px rgba(56, 189, 248, 0.7));
+    pointer-events: none;
+}
+
+/* ------------- COMMUNITY FEED ------------- */
+.community-post {
+    border-radius: 10px;
+    border: 1px solid rgba(148, 163, 255, 0.35);
+    padding: 6px 8px;
+    margin-bottom: 6px;
+    background: radial-gradient(circle at top, rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.95));
+}
+
+.community-post-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.78rem;
+    margin-bottom: 3px;
+}
+
+.community-name {
+    font-weight: 600;
+    color: #e5e7ff;
+}
+
+.community-time {
+    color: #9ca3ff;
+    font-size: 0.75rem;
+}
+
+.community-passport-summary {
+    font-size: 0.8rem;
+    color: #e5e7ff;
+}
+
+.badge-passport {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1px 6px;
+    margin-right: 4px;
+    border-radius: 999px;
+    border: 1px solid rgba(94, 234, 212, 0.7);
+    font-size: 0.7rem;
+    color: #bbf7d0;
+    background: radial-gradient(circle, rgba(34, 197, 94, 0.18), rgba(0, 0, 0, 0.1));
+}
+
+.community-country {
+    font-size: 0.76rem;
+    color: #a5b4fc;
+}
+
+.community-message {
+    margin-top: 4px;
+    font-size: 0.8rem;
+    color: #cbd5ff;
+}
+
+/* ------------- ACHIEVEMENTS ------------- */
+.achievement-item {
+    padding: 4px 6px;
+    border-radius: 8px;
+    border: 1px solid rgba(129, 140, 248, 0.45);
+    margin-bottom: 4px;
+    background: rgba(15, 23, 42, 0.9);
+    font-size: 0.8rem;
+}
+
+.achievement-item strong {
+    color: #e5e7ff;
+}
+
+.achievement-item span {
+    color: #c7d2ff;
+    font-size: 0.78rem;
+}
+
+/* ------------- ARTISTS BY COUNTRY ------------- */
+.artists-country-group {
+    border-radius: 10px;
+    border: 1px solid rgba(148, 163, 255, 0.4);
+    padding: 6px 6px 4px;
+    margin-bottom: 4px;
+    background: rgba(15, 23, 42, 0.95);
+}
+
+.artists-country-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #e5e7ff;
+    margin-bottom: 2px;
+}
+
+.artists-country-list {
+    margin: 0;
+    padding-left: 16px;
+    font-size: 0.78rem;
+    color: #cbd5ff;
+}
+
+/* ------------- RESPONSIVE (BASIC) ------------- */
+@media (max-width: 1024px) {
+    .layout-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .passport-header-row {
+        align-items: flex-start;
+    }
+
+    .planet-wrapper {
+        margin-bottom: 6px;
+    }
+}
