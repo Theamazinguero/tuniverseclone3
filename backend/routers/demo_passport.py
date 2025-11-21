@@ -1,3 +1,24 @@
+"""
+@Author: Tyler Tristan
+@Version: 1.0
+@Since: 10/3/2025
+
+Usage:
+    Demo Music Passport router for Tuniverse backend.
+    Provides:
+        • A mock /demo_passport/{user_id} endpoint
+        • Static sample country and region data
+        • A placeholder share_link for UI testing
+
+Change Log:
+    Version 1.0 (11/3/2025): Added demo passport endpoint returning mock data
+                             for frontend development and testing.
+"""
+
+
+
+
+
 from fastapi import APIRouter
 
 router = APIRouter(prefix="/demo_passport", tags=["Demo"])
