@@ -1,3 +1,21 @@
+"""
+@Author: Tyler Tristan
+@Version: 1.0
+@Since: 10/3/2025
+
+Usage:
+    Community router for Tuniverse backend.
+    Provides endpoints for:
+        • Accepting community posts shared from the web UI
+        • Storing posts in an in-memory feed (newest first)
+        • Returning the community feed to clients
+
+Change Log:
+    Version 1.0 (10/3/2025): Implemented basic in-memory community feed
+                              with /share and /feed endpoints.
+"""
+
+
 # backend/routers/community.py
 
 from datetime import datetime, timezone
