@@ -1,3 +1,24 @@
+/*
+@Author: Tuniverse Team
+@Version: 1.0
+@Since: 10/3/2025
+
+Usage:
+    Core frontend logic for the Tuniverse web UI.
+    Handles:
+        • Spotify login and token handling
+        • Fetching playlists and user profile
+        • Building Music Passport snapshots from backend data
+        • Computing region breakdown (Artists by Region)
+        • Sharing passport snapshots to the Community feed
+        • Loading and rendering community posts and achievements
+
+Change Log:
+    Version 1.0 (11/09/2025): Implemented main frontend behavior for Tuniverse, including
+                             passport loading, region breakdown, and community sharing.
+*/
+
+
 // web-ui/app.js
 
 const API_BASE = "http://127.0.0.1:8000";
@@ -710,6 +731,7 @@ function loadAchievements() {
 
     box.innerHTML = html;
 }
+
 
 
 
