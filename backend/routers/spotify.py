@@ -1,3 +1,24 @@
+"""
+@Author: Max Henson
+@Version: 1.0
+@Since: 10/3/2025
+
+Usage:
+    Spotify router for Tuniverse backend.
+    Provides endpoints that proxy the Spotify Web API:
+        • /spotify/me – current user's Spotify profile
+        • /spotify/currently_playing – user's currently playing track
+
+    Uses:
+        • Authorization: Bearer <spotify_access_token> header from the client
+        • Helper _call_spotify() to wrap common request/validation logic
+
+Change Log:
+    Version 1.0 (11/3/2025): Implemented core Spotify integration with profile and
+                             currently-playing endpoints for frontend use.
+"""
+
+
 # backend/routers/spotify.py
 
 from fastapi import APIRouter, HTTPException, Header
