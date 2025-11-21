@@ -1,3 +1,22 @@
+/*
+@Author: 
+@Version: 1.0
+@Since: 11/5/2025
+
+Usage:
+    Global styles for the Tuniverse frontend.
+    Provides:
+        • Layout and grid for app shell and cards
+        • Starfield background and glassmorphism effects
+        • Typography and button styles
+        • Music Passport, Community feed, and region visuals
+
+Change Log:
+    Version 1.0 (11/5/2025): Initial styling for Tuniverse web UI.
+*/
+
+
+
 /* web-ui/styles.css */
 
 /* -------- RESET -------- */
@@ -541,3 +560,4 @@ body {
         width: 110px;
     }
 }
+
